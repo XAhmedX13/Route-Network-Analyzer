@@ -1,2 +1,7 @@
-.vscode
+.DS_Store
+build/
+*.o
+*.out
 *.exe
+test_heap
+.vscode/

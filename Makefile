@@ -1,3 +1,4 @@
+
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra -Iinclude
 
@@ -5,7 +6,7 @@ BUILD = build
 
 .PHONY: all test app clean
 
-# Default: run Milestone 1 tests
+# Default: compile and run existing tests
 all: test
 
 # Create build directory
@@ -24,13 +25,13 @@ $(BUILD)/test_bst: tests/test_bst.cpp src/BST.cpp include/BST.h | $(BUILD)
 $(BUILD)/test_queue_stack: tests/test_queue_stack.cpp src/Queue.cpp src/Stack.cpp include/Queue.h include/Stack.h | $(BUILD)
 	$(CXX) $(CXXFLAGS) tests/test_queue_stack.cpp src/Queue.cpp src/Stack.cpp -o $@
 
-# Run existing tests
+# Run all existing tests
 test: $(BUILD)/test_heap $(BUILD)/test_bst $(BUILD)/test_queue_stack
 	./$(BUILD)/test_heap
 	./$(BUILD)/test_bst
 	./$(BUILD)/test_queue_stack
 
-# Compile full application when ready
+# Compile complete application
 app: $(BUILD)/campus_app
 
 $(BUILD)/campus_app: $(wildcard src/*.cpp) $(wildcard include/*.h) | $(BUILD)

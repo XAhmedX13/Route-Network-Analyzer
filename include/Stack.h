@@ -14,7 +14,10 @@ private:
 
 public:
     Stack();             
-    ~Stack();            
+    ~Stack();   
+    
+    Stack(const Stack&) = delete;
+    Stack& operator=(const Stack&) = delete;
 
     void push(int value);
     void pop();           

@@ -15,7 +15,10 @@ private:
 
 public:
     Queue();            
-    ~Queue();            
+    ~Queue();    
+    
+    Queue(const Queue&) = delete;
+    Queue& operator=(const Queue&) = delete;
 
     void enqueue(int value); 
     void dequeue();          

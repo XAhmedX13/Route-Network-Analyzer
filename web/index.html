@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campus Route Finder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- pictograms, drawn once and reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-start" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></symbol>
+  <symbol id="i-end" viewBox="0 0 24 24"><path d="M6 21V3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M6.5 4h12l-3 4.5 3 4.5h-12z" fill="currentColor"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2.2" fill="currentColor"/><path d="M12 8.5l-3 4 1 8M12 8.5l3.5 3.5 3 .5M12 8.5l-1.2 5.5 3.7 3 .8 4M9 12.5l-3 .5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-stairs" viewBox="0 0 24 24"><path d="M3 20h5v-5h5v-5h5V5h3" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" stroke-linejoin="miter" fill="none"/></symbol>
+  <symbol id="i-elevator" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.5l-3 3.5h6zM12 16.5l-3-3.5h6z" fill="currentColor"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M14 3H6v18h8" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-outdoor" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6" fill="currentColor"/><path d="M12 14v8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 3v16M7 19l-3.5-3.5M7 19l3.5-3.5M17 21V5M17 5l-3.5 3.5M17 5l3.5 3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-ramp" viewBox="0 0 24 24"><path d="M3 19h18L3 8z" fill="currentColor"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.2-5.1M5 4v4.5h4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z" fill="currentColor"/></symbol>
+  <symbol id="i-restroom" viewBox="0 0 24 24"><circle cx="7.5" cy="4.5" r="2" fill="currentColor"/><circle cx="16.5" cy="4.5" r="2" fill="currentColor"/><path d="M5 8.5h5v6.5H8.8V21H6.2v-6H5zM14 8.5h5l-1.5 6.5h-1V21h-1.6v-6H14z" fill="currentColor"/></symbol>
+  <symbol id="i-food" viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.2 1.2-3 4-3 7h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s6-5.6 6-10.5A6 6 0 0 0 6 10.5C6 15.4 12 21 12 21z" fill="currentColor"/><circle cx="12" cy="10.5" r="2.2" fill="#fff"/></symbol>
+</svg>
+
+<div class="app">
+
+  <aside class="side" id="side">
+    <section class="board" aria-label="Plan a route">
+      <div class="brand">
+        <div class="brand-text">
+          <h1>Campus Route Finder</h1>
+          <p>Any two places at AUC New Cairo, step-free if you need it.</p>
+        </div>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark" title="Light or dark">
+          <svg><use href="#i-moon"/></svg>
+        </button>
+      </div>
+
+      <form id="planner" autocomplete="off">
+        <div class="field" id="fromField">
+          <svg class="field-icon"><use href="#i-start"/></svg>
+          <input id="fromInput" type="text" placeholder="Where are you?" role="combobox" aria-expanded="false"
+                 aria-controls="fromList" aria-label="Start" spellcheck="false">
+          <button type="button" class="clear" id="fromClear" aria-label="Clear start" hidden>&times;</button>
+          <ul class="suggest" id="fromList" role="listbox" hidden></ul>
+          <p class="hint" id="fromHint"></p>
+        </div>
+
+        <button class="swap" id="swapBtn" type="button" aria-label="Swap start and destination" title="Swap">
+          <svg><use href="#i-swap"/></svg>
+        </button>
+
+        <div class="field" id="toField">
+          <svg class="field-icon"><use href="#i-end"/></svg>
+          <input id="toInput" type="text" placeholder="Where to?" role="combobox" aria-expanded="false"
+                 aria-controls="toList" aria-label="Destination" spellcheck="false">
+          <button type="button" class="clear" id="toClear" aria-label="Clear destination" hidden>&times;</button>
+          <ul class="suggest" id="toList" role="listbox" hidden></ul>
+          <p class="hint" id="toHint"></p>
+        </div>
+
+        <div class="modes" role="group" aria-label="Route type">
+          <button type="button" class="mode" id="modeFast" aria-pressed="true"><svg><use href="#i-walk"/></svg>Fastest</button>
+          <button type="button" class="mode free" id="modeFree" aria-pressed="false"><svg><use href="#i-ramp"/></svg>Step-free</button>
+        </div>
+
+        <button class="go" id="goBtn" type="submit">Find route</button>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="nearby" id="nearby">
+        <p class="nearby-title">Nearest to your start</p>
+        <div class="chips">
+          <button type="button" class="chip" data-find="restroom"><svg><use href="#i-restroom"/></svg>Restroom</button>
+          <button type="button" class="chip" data-find="elevator"><svg><use href="#i-elevator"/></svg>Elevator</button>
+          <button type="button" class="chip" data-find="food"><svg><use href="#i-food"/></svg>Food</button>
+          <button type="button" class="chip" data-find="entrance"><svg><use href="#i-door"/></svg>Entrance</button>
+        </div>
+        <ol class="found" id="found" hidden></ol>
+      </div>
+    </section>
+
+    <section class="paper" id="examples">
+      <h2>Try one</h2>
+      <ul class="examples" id="exampleList"></ul>
+    </section>
+
+    <section class="paper" id="result" hidden>
+      <div class="compare" id="compare"></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="result-foot">
+        <button class="text-btn" id="copyBtn" type="button"><svg><use href="#i-link"/></svg>Copy link to this route</button>
+        <p>Distances are estimates measured from the floor plans, about 7 cm per plan unit.</p>
+      </div>
+    </section>
+
+    <footer class="side-foot" id="sideFoot"></footer>
+  </aside>
+
+  <main class="stage" id="stage">
+    <section class="pane" id="campusPane" aria-label="Campus map">
+      <header class="pane-head"><h2>Campus</h2><span id="campusNote"></span></header>
+      <div class="canvas" id="campusCanvas"><svg id="campusSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campus map"></svg></div>
+      <div class="zoom"><button type="button" data-zoom="in" data-pane="campus" aria-label="Zoom in">+</button><button type="button" data-zoom="out" data-pane="campus" aria-label="Zoom out">&minus;</button><button type="button" data-zoom="fit" data-pane="campus" aria-label="Fit to route">Fit</button></div>
+    </section>
+
+    <section class="pane" id="floorPane" aria-label="Floor plan">
+      <header class="pane-head"><h2 id="floorTitle">Floor plan</h2><div class="floors" id="floorChips"></div></header>
+      <div class="canvas" id="floorCanvas"><svg id="floorSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floor plan"></svg>
+        <p class="overlay" id="floorOverlay"></p></div>
+      <div class="zoom"><button type="button" data-zoom="in" data-pane="floor" aria-label="Zoom in">+</button><button type="button" data-zoom="out" data-pane="floor" aria-label="Zoom out">&minus;</button><button type="button" data-zoom="fit" data-pane="floor" aria-label="Fit to route">Fit</button></div>
+    </section>
+
+    <div class="player" id="player" hidden>
+      <button class="play" id="playBtn" type="button" aria-label="Play the walk"><svg><use href="#i-play"/></svg></button>
+      <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
+      <output id="playInfo"></output>
+    </div>
+  </main>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<div class="pop" id="pop" hidden></div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

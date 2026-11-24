@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F2A43">
 <title>Campus Route Finder</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-view="campus">
 
 <!-- pictograms, drawn once and reused -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -19,7 +20,7 @@
   <symbol id="i-door" viewBox="0 0 24 24"><path d="M14 3H6v18h8" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="i-outdoor" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6" fill="currentColor"/><path d="M12 14v8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 3v16M7 19l-3.5-3.5M7 19l3.5-3.5M17 21V5M17 5l-3.5 3.5M17 5l3.5 3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
-  <symbol id="i-ramp" viewBox="0 0 24 24"><path d="M3 19h18L3 8z" fill="currentColor"/></symbol>
+  <symbol id="i-ramp" viewBox="0 0 24 24"><circle cx="10" cy="4" r="2" fill="currentColor"/><path d="M10 7v6h6l2 6M10 9.5H6M13.5 13a5 5 0 1 1-6.5-4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
   <symbol id="i-replay" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.2-5.1M5 4v4.5h4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
@@ -28,123 +29,170 @@
   <symbol id="i-restroom" viewBox="0 0 24 24"><circle cx="7.5" cy="4.5" r="2" fill="currentColor"/><circle cx="16.5" cy="4.5" r="2" fill="currentColor"/><path d="M5 8.5h5v6.5H8.8V21H6.2v-6H5zM14 8.5h5l-1.5 6.5h-1V21h-1.6v-6H14z" fill="currentColor"/></symbol>
   <symbol id="i-food" viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.2 1.2-3 4-3 7h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s6-5.6 6-10.5A6 6 0 0 0 6 10.5C6 15.4 12 21 12 21z" fill="currentColor"/><circle cx="12" cy="10.5" r="2.2" fill="#fff"/></symbol>
+  <symbol id="i-class" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-office" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 7h8v14M4 21h17M7.5 8h1.5M7.5 12h1.5M7.5 16h1.5M15.5 11h1.5M15.5 15h1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-turn" viewBox="0 0 24 24"><path d="M12 2.5l9.5 9.5-9.5 9.5L2.5 12z" fill="currentColor"/><path d="M9 15v-3.5h6M12.5 8.5l3 3-3 3" style="stroke:var(--turn-arrow,#fff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1.5M13.5 10H15M9 14h1.5M13.5 14H15M10.5 21v-3h3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
 </svg>
 
-<div class="app">
+<!-- the map: two drawings in the same place, only one is shown -->
+<main class="map" id="map">
+  <section class="pane" id="campusPane" aria-label="Campus map">
+    <svg id="campusSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campus map"></svg>
+  </section>
+  <section class="pane" id="floorPane" aria-label="Floor plan">
+    <svg id="floorSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floor plan"></svg>
+  </section>
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
+</main>
 
-  <aside class="side" id="side">
-    <section class="board" aria-label="Plan a route">
-      <div class="brand">
-        <div class="brand-text">
-          <h1>Campus Route Finder</h1>
-          <p>Any two places at AUC New Cairo, step-free if you need it.</p>
+<!-- inside a building: where am I, and the floor picker -->
+<div class="bldbar" id="bldBar">
+  <button type="button" class="pill-btn" id="toCampus" aria-label="Back to the campus map"><svg><use href="#i-back"/></svg>Campus</button>
+  <span class="bld-name" id="floorTitle"></span>
+</div>
+<div class="floorpick" id="floorChips" role="group" aria-label="Floors"></div>
+
+<!-- map buttons -->
+<div class="fabs" id="fabs">
+  <button type="button" class="fab" data-zoom="fit" aria-label="Show the whole route" title="Fit"><svg><use href="#i-fit"/></svg></button>
+  <div class="zoom-pair">
+    <button type="button" class="fab" data-zoom="in" aria-label="Zoom in">+</button>
+    <button type="button" class="fab" data-zoom="out" aria-label="Zoom out">&minus;</button>
+  </div>
+</div>
+<button type="button" class="dir-fab" id="dirFab" aria-label="Directions"><svg><use href="#i-turn"/></svg><span>Directions</span></button>
+
+<!-- while walking: the current instruction -->
+<div class="nav-banner" id="navBanner" hidden>
+  <span class="nb-icon" id="nbIcon"></span>
+  <div class="nb-text"><b id="nbText"></b><span id="nbWhere"></span></div>
+  <span class="nb-m" id="nbM"></span>
+</div>
+<div class="nav-bar" id="navBar" hidden>
+  <button class="play" id="playBtn" type="button" aria-label="Play the walk"><svg><use href="#i-play"/></svg></button>
+  <div class="nav-mid">
+    <output id="playInfo"></output>
+    <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
+  </div>
+  <button class="nav-exit" id="navExit" type="button">Exit</button>
+</div>
+
+<!-- search, directions, the sheet -->
+<div class="panel" id="panel">
+  <header class="topbar" id="topbar">
+    <div class="searchbar" id="searchBox">
+      <img class="logo" src="logo.svg" alt="">
+      <div class="field grow">
+        <input id="qInput" type="text" placeholder="Search rooms, offices, buildings" role="combobox" aria-expanded="false"
+               aria-controls="qList" aria-label="Search" spellcheck="false" autocomplete="off">
+        <button type="button" class="clear" id="qClear" aria-label="Clear search" hidden><svg><use href="#i-close"/></svg></button>
+        <ul class="suggest" id="qList" role="listbox" hidden></ul>
+      </div>
+      <button class="round-btn" id="themeBtn" type="button" aria-label="Switch between light and dark" title="Light or dark"><svg><use href="#i-moon"/></svg></button>
+    </div>
+
+    <form class="dirbox" id="dirBox" autocomplete="off" hidden>
+      <div class="dir-head">
+        <button type="button" class="round-btn" id="dirBack" aria-label="Close directions"><svg><use href="#i-back"/></svg></button>
+        <div class="modes" role="tablist" aria-label="Route type">
+          <button type="button" class="mode" id="modeFast" role="tab" aria-pressed="true"><svg><use href="#i-walk"/></svg>Fastest</button>
+          <button type="button" class="mode free" id="modeFree" role="tab" aria-pressed="false"><svg><use href="#i-ramp"/></svg>Step-free</button>
         </div>
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark" title="Light or dark">
-          <svg><use href="#i-moon"/></svg>
-        </button>
+      </div>
+      <div class="dir-fields">
+        <div class="dots" aria-hidden="true"><svg class="d-start"><use href="#i-start"/></svg><i></i><i></i><i></i><svg class="d-end"><use href="#i-pin"/></svg></div>
+        <div class="dir-inputs">
+          <div class="field">
+            <input id="fromInput" type="text" placeholder="Choose start" role="combobox" aria-expanded="false"
+                   aria-controls="fromList" aria-label="Start" spellcheck="false">
+            <button type="button" class="clear" id="fromClear" aria-label="Clear start" hidden><svg><use href="#i-close"/></svg></button>
+            <ul class="suggest" id="fromList" role="listbox" hidden></ul>
+          </div>
+          <div class="field">
+            <input id="toInput" type="text" placeholder="Choose destination" role="combobox" aria-expanded="false"
+                   aria-controls="toList" aria-label="Destination" spellcheck="false">
+            <button type="button" class="clear" id="toClear" aria-label="Clear destination" hidden><svg><use href="#i-close"/></svg></button>
+            <ul class="suggest" id="toList" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <button class="round-btn swap" id="swapBtn" type="button" aria-label="Swap start and destination" title="Swap"><svg><use href="#i-swap"/></svg></button>
+      </div>
+    </form>
+
+    <div class="chips" id="fKinds" role="group" aria-label="Kind of place">
+      <label class="chip select"><svg><use href="#i-building"/></svg><select id="fBuilding" aria-label="Building"><option value="">All buildings</option></select></label>
+      <label class="chip select" id="fFloorWrap" hidden><select id="fFloor" aria-label="Floor"><option value="">Any floor</option></select></label>
+      <button type="button" class="chip" data-kind="class" aria-pressed="false"><svg><use href="#i-class"/></svg>Classrooms</button>
+      <button type="button" class="chip" data-kind="room" aria-pressed="false"><svg><use href="#i-office"/></svg>Offices</button>
+      <button type="button" class="chip" data-kind="restroom" aria-pressed="false"><svg><use href="#i-restroom"/></svg>Restrooms</button>
+      <button type="button" class="chip" data-kind="food" aria-pressed="false"><svg><use href="#i-food"/></svg>Food</button>
+      <button type="button" class="chip" data-kind="elevator" aria-pressed="false"><svg><use href="#i-elevator"/></svg>Elevators</button>
+      <button type="button" class="chip" data-kind="entrance" aria-pressed="false"><svg><use href="#i-door"/></svg>Entrances</button>
+    </div>
+  </header>
+
+  <section class="sheet" id="sheet" aria-label="Details">
+    <div class="handle" id="handle" role="button" tabindex="0" aria-label="Drag to resize"><i></i></div>
+    <div class="sheet-body" id="sheetBody">
+
+      <div class="sec" id="secHome">
+        <h2>Explore AUC</h2>
+        <p class="sub">Search a room, tap a building to look inside, or try a route.</p>
+        <ul class="examples" id="exampleList"></ul>
+        <p class="foot" id="sideFoot"></p>
       </div>
 
-      <div class="filters" id="filters" aria-label="Narrow the search">
-        <div class="filter-row">
-          <select id="fBuilding" aria-label="Building"><option value="">All buildings</option></select>
-          <select id="fFloor" aria-label="Floor" disabled><option value="">Any floor</option></select>
-        </div>
-        <div class="chips" id="fKinds" role="group" aria-label="Kind of place">
-          <button type="button" class="chip" data-kind="class" aria-pressed="false">Classrooms</button>
-          <button type="button" class="chip" data-kind="room" aria-pressed="false">Offices and rooms</button>
-          <button type="button" class="chip" data-kind="restroom" aria-pressed="false">Restrooms</button>
-          <button type="button" class="chip" data-kind="elevator" aria-pressed="false">Elevators</button>
-          <button type="button" class="chip" data-kind="food" aria-pressed="false">Food</button>
-          <button type="button" class="chip" data-kind="entrance" aria-pressed="false">Entrances</button>
-        </div>
-        <button type="button" class="text-btn" id="fReset" hidden>Clear filters</button>
+      <div class="sec" id="secResults" hidden>
+        <div class="sec-head"><h2 id="resTitle">Results</h2><button type="button" class="text-btn" id="fReset">Clear</button></div>
+        <ul class="results" id="resList"></ul>
       </div>
 
-      <form id="planner" autocomplete="off">
-        <div class="field" id="fromField">
-          <svg class="field-icon"><use href="#i-start"/></svg>
-          <input id="fromInput" type="text" placeholder="Where are you?" role="combobox" aria-expanded="false"
-                 aria-controls="fromList" aria-label="Start" spellcheck="false">
-          <button type="button" class="clear" id="fromClear" aria-label="Clear start" hidden>&times;</button>
-          <ul class="suggest" id="fromList" role="listbox" hidden></ul>
-          <p class="hint" id="fromHint"></p>
+      <div class="sec" id="secPlace" hidden>
+        <div class="place-head">
+          <div><h2 id="plName"></h2><p class="sub" id="plWhere"></p></div>
+          <button type="button" class="round-btn" id="plClose" aria-label="Close"><svg><use href="#i-close"/></svg></button>
         </div>
-
-        <button class="swap" id="swapBtn" type="button" aria-label="Swap start and destination" title="Swap">
-          <svg><use href="#i-swap"/></svg>
-        </button>
-
-        <div class="field" id="toField">
-          <svg class="field-icon"><use href="#i-end"/></svg>
-          <input id="toInput" type="text" placeholder="Where to?" role="combobox" aria-expanded="false"
-                 aria-controls="toList" aria-label="Destination" spellcheck="false">
-          <button type="button" class="clear" id="toClear" aria-label="Clear destination" hidden>&times;</button>
-          <ul class="suggest" id="toList" role="listbox" hidden></ul>
-          <p class="hint" id="toHint"></p>
+        <div class="actions">
+          <button type="button" class="act primary" id="plTo"><svg><use href="#i-turn"/></svg>Directions</button>
+          <button type="button" class="act" id="plFrom"><svg><use href="#i-start"/></svg>From here</button>
+          <button type="button" class="act" id="plShare"><svg><use href="#i-link"/></svg>Share</button>
         </div>
-
-        <div class="modes" role="group" aria-label="Route type">
-          <button type="button" class="mode" id="modeFast" aria-pressed="true"><svg><use href="#i-walk"/></svg>Fastest</button>
-          <button type="button" class="mode free" id="modeFree" aria-pressed="false"><svg><use href="#i-ramp"/></svg>Step-free</button>
-        </div>
-
-        <button class="go" id="goBtn" type="submit">Find route</button>
-        <p class="status" id="status" role="status" aria-live="polite"></p>
-      </form>
-
-      <div class="nearby" id="nearby">
-        <p class="nearby-title">Nearest to your start</p>
-        <div class="chips">
+        <p class="about" id="plAbout"></p>
+        <h3>Nearby</h3>
+        <div class="chips wrap" id="nearChips">
           <button type="button" class="chip" data-find="restroom"><svg><use href="#i-restroom"/></svg>Restroom</button>
           <button type="button" class="chip" data-find="elevator"><svg><use href="#i-elevator"/></svg>Elevator</button>
           <button type="button" class="chip" data-find="food"><svg><use href="#i-food"/></svg>Food</button>
-          <button type="button" class="chip" data-find="entrance"><svg><use href="#i-door"/></svg>Entrance</button>
+          <button type="button" class="chip" data-find="entrance"><svg><use href="#i-door"/></svg>Exit</button>
         </div>
-        <ol class="found" id="found" hidden></ol>
+        <ul class="results" id="found"></ul>
       </div>
-    </section>
 
-    <section class="paper" id="examples">
-      <h2>Try one</h2>
-      <ul class="examples" id="exampleList"></ul>
-    </section>
-
-    <section class="paper" id="result" hidden>
-      <div class="compare" id="compare"></div>
-      <ol class="steps" id="steps"></ol>
-      <div class="result-foot">
-        <button class="text-btn" id="copyBtn" type="button"><svg><use href="#i-link"/></svg>Copy link to this route</button>
-        <p>Distances are estimates measured from the floor plans, about 7 cm per plan unit.</p>
+      <div class="sec" id="secRoute" hidden>
+        <div class="summary">
+          <div><div class="big" id="rTime"></div><p class="sub" id="rSub"></p></div>
+          <button type="button" class="start-btn" id="startBtn"><svg><use href="#i-play"/></svg>Start</button>
+        </div>
+        <div class="compare" id="compare"></div>
+        <ol class="steps" id="steps"></ol>
+        <div class="route-foot">
+          <button class="text-btn" id="copyBtn" type="button"><svg><use href="#i-link"/></svg><span>Copy link to this route</span></button>
+          <p>Distances are estimates from the floor plans, about 7 cm per plan unit.</p>
+        </div>
       </div>
-    </section>
 
-    <footer class="side-foot" id="sideFoot"></footer>
-  </aside>
-
-  <main class="stage" id="stage">
-    <section class="pane" id="campusPane" aria-label="Campus map">
-      <header class="pane-head"><h2>Campus</h2><span id="campusNote"></span></header>
-      <div class="canvas" id="campusCanvas"><svg id="campusSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campus map"></svg></div>
-      <div class="zoom"><button type="button" data-zoom="in" data-pane="campus" aria-label="Zoom in">+</button><button type="button" data-zoom="out" data-pane="campus" aria-label="Zoom out">&minus;</button><button type="button" data-zoom="fit" data-pane="campus" aria-label="Fit to route">Fit</button></div>
-    </section>
-
-    <section class="pane" id="floorPane" aria-label="Floor plan">
-      <header class="pane-head"><h2 id="floorTitle">Floor plan</h2><div class="floors" id="floorChips"></div></header>
-      <div class="canvas" id="floorCanvas"><svg id="floorSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floor plan"></svg>
-        <p class="overlay" id="floorOverlay"></p></div>
-      <div class="zoom"><button type="button" data-zoom="in" data-pane="floor" aria-label="Zoom in">+</button><button type="button" data-zoom="out" data-pane="floor" aria-label="Zoom out">&minus;</button><button type="button" data-zoom="fit" data-pane="floor" aria-label="Fit to route">Fit</button></div>
-    </section>
-
-    <div class="player" id="player" hidden>
-      <button class="play" id="playBtn" type="button" aria-label="Play the walk"><svg><use href="#i-play"/></svg></button>
-      <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
-      <output id="playInfo"></output>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
-  </main>
+  </section>
 </div>
 
 <div class="tip" id="tip" hidden></div>
-<div class="pop" id="pop" hidden></div>
 
 <script src="data.js"></script>
 <script src="plans.js"></script>

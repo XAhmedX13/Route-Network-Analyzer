@@ -135,3 +135,60 @@ CORE continuation: replaced diagonal upper-floor west-wing paths with corridor w
 ### To check later: west corridor
 
 - Confirm the estimated west-corridor centerline, each classroom/lab door, and STX1 landing. Other corridors, room completeness, entrance sides, the approximate scale, and all provisional shaft matches still need audit. Existing connections elsewhere can cross walls; this remains an incomplete draft.
+
+CORE continuation: added the visible Garden-Plaza west stair as provisional STX4 with a 113-unit inaccessible link and the Plaza lecture-stair exterior entrance candidate; traced part of the Garden L-049 south passage and Garden G022/G023 door approaches. Plaza P001/P002 door points and P003 access through P005 were revised; Plaza east stair now approaches from its north door. Restroom vertices moved near corridor-side doors. The current graph has 315 vertices and 324 edges: Garden 137, Plaza 77, First 52, Second 49. Structural and loader checks pass. All four sketches were regenerated with internal stair segments dashed red and vertical links labelled at shafts.
+
+### To check later: latest CORE changes
+
+- STX4 is a provisional Garden-Plaza shaft match. Confirm this stair and the other position-matched shafts and assess whether they are accessible to intended users.
+- The Plaza southern route from corridor P-030 through food outlet P025 to stair STX1 is provisional; verify that the outlet's two openings connect and are available for passage. The new exit's SW side is an estimate pending orientation matching against the campus layout.
+- Check the revised P001-P003 doors, all Garden south-passage bends and dock steps, and the G022/G023 approach. The dock step edge is coded STAIRS and inaccessible based on the drawing; confirm it on site.
+- The candidate arc and line-intersection reports in tools/A_CORE_doors_*.tsv and tools/A_CORE_wall_candidates.tsv are review aids only: plan furniture and labels can generate false positives. Other draft edges may cross walls. The full R.NO. inventory, entrance sides, normalized scale, and room/door/shaft positions are not fully audited. Do not merge as a finished walking graph.
+
+CORE continuation: rerouted Garden theater G019 from commons G017 through the west double doors and connected storage G018 along the theater's west aisle to its visible door. The four draft sketches were regenerated. Current graph: 316 vertices and 325 edges; Garden 138, Plaza 77, First 52, Second 49. Structural checker and real loader pass.
+
+### To check later: theater and overall draft
+
+- Confirm the theater aisle stays clear and that G018 is accessible through the indicated east-side door. Several other provisional routes may cross walls; the automated line-intersection report flags candidates but does not establish which strokes are walls. The full room inventory, exact entrance orientations, scale and shaft matches still need independent review. This is not a finished walking graph.
+
+CORE Garden correction: the G041/G042 control rooms adjoin a separate stair drawn near (2250, 1730), not the previously linked stair near (2250, 1000). Added that stair as provisional STX5 and corrected the door sequence: G041 opens through G042, which opens into its stair enclosure. Removed the two unsupported long connections to STX2. The graph now has 317 vertices and 325 edges (Garden 139, Plaza 77, First 52, Second 49). The loader succeeds, but the connectivity checker reports two components: the control-room stair enclosure is detached from the rest in the supplied Garden plan. Sketches regenerated.
+
+### To check later: detached theater stair
+
+- Establish the real connection between the isolated G041/G042 stair enclosure and the remaining building, and whether STX5 serves another floor. No joining edge has been fabricated. The building cannot be treated as a complete connected routing graph until this is resolved. Other routes, room inventory and shaft matches remain provisional as described above.
+
+CORE Garden continuation: rerouted G020 and G021 through the theater's east vestibule and an estimated aisle rather than from the distant office corridor. Current draft: 320 vertices and 328 edges (Garden 142, Plaza 77, First 52, Second 49). The loader succeeds. The connectivity check still fails with two components for the detached control-room stair described above; the four draft sketches were refreshed.
+
+### To check later: east theater approach
+
+- Confirm that the theater's south and east aisles are clear and the east vestibule connects to the theater as drawn. The isolated control-room stair remains disconnected, and prior room, shaft, accessibility and route-audit uncertainties still apply.
+
+CORE continuation: adjusted the Garden G037/G038 door positions and routed the west side of the office suite through an estimated passage waypoint chain instead of the earlier line across offices. The structural checker now continues through all four floors before reporting a disconnected building; its failure status is unchanged. Current draft: 325 locations and 333 edges (Garden 147, Plaza 77, First 52, Second 49); loader succeeds, sketches refreshed.
+
+### To check later: Garden office passage
+
+- Check the revised office passage and G037/G038 door positions against the plan at high zoom. The detached G041/G042 enclosure still lacks a verified link; other provisional routes and the complete room/shaft inventory still require review.
+
+CORE continuation: on First and Second, replaced long diagonal links from the west end of the east corridor to classroom doors with centerline waypoint chains and short door approaches. The individual floor checks remain connected except for the known Garden enclosure; the whole-building check therefore still fails. The loader accepts 338 locations and 346 edges (Garden 147, Plaza 77, First 58, Second 56). Sketches refreshed.
+
+### To check later: upper east corridors
+
+- Check the estimated corridor centerlines and each doorway, including the approaches to the east stair. The connectivity check does not prove a wall-free route. The Garden enclosure and all earlier draft uncertainties remain unresolved.
+
+CORE continuation: moved the First- and Second-floor west stair landings and their approach waypoints to the door openings shown at the south end of the corridor, replacing positions across the stair treads. Counts remain 338 locations and 346 edges (Garden 147, Plaza 77, First 58, Second 56). All four draft sketches regenerated; the full structural check continues to flag the two-component Garden graph.
+
+### To check later: west stair
+
+- Confirm the estimated positions within the stair vestibules and verify their provisional shaft match. The control-room enclosure connection and other previously noted draft uncertainties remain unresolved.
+
+CORE continuation: revised Plaza office P004 to approach its north-side doorway and bent the registration passage west of the drawn kiosk row. Current draft: 341 locations and 349 edges (Garden 147, Plaza 80, First 58, Second 56); the real loader accepts the files and the sketches were refreshed. The full connectivity check still fails on the detached Garden theater stair enclosure.
+
+### To check later: Plaza approaches
+
+- Confirm the P004 doorway and the bends around registration kiosks on the drawing and in use; waypoint locations and corridor weights are estimated. The detached Garden enclosure, other provisional paths, room inventory and shaft matches still need review.
+
+CORE continuation: adjusted Plaza P003/P005 door positions and routed the P000 closet from its east opening. Added doorway approaches and moved the First and Second central stair landings closer to their entrances. Current draft: 344 locations and 352 edges (Garden 147, Plaza 81, First 59, Second 57). The loader accepts the data and sketches were refreshed. Structural validation still reports two building components because the Garden control-room stair enclosure has no documented link to the rest.
+
+### To check later: latest doors and stairs
+
+- Verify the closet opening, P003/P005 shared door, and upper central-stair door and shaft positions. The graph is incomplete: the Garden enclosure, all unverified paths, the room inventory and the entrance/shaft audit remain open.

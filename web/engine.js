@@ -147,6 +147,37 @@
     return out.slice(0, limit || 5);
   }
 
+  // ---------- plain-words description of a place ----------
+  var WHAT = {
+    ROOM: 'A room or office', CLASSROOM: 'A classroom or lecture room', RESTROOM: 'A restroom', ELEVATOR: 'An elevator',
+    STAIRS: 'A staircase', ENTRANCE: 'An entrance door', CAFE: 'A cafe', RESTAURANT: 'A place to eat', VENDOR: 'A vending point',
+    BUILDING: 'A building', OUTDOOR: 'An outdoor spot', OTHER: 'A room or service space', HALLWAY: 'A corridor point'
+  };
+  // returns a few short sentences, e.g. "A classroom on the First floor of X. About 12 m from the nearest elevator. Close to Lab 2111."
+  function describe(v) {
+    var t = typeName(v), out = [], r = dijkstra(v, false), best = {}, close = [], x;
+    var where = isOutdoors(v) ? 'outdoors on the campus walkways' : 'on the ' + floorName(v) + ' floor of ' + building(v)[1];
+    out.push(WHAT[t] + ' ' + where + '.');
+    for (x = 0; x < N; x++) {
+      if (x === v || r.dist[x] === Infinity || isWaypoint(x)) continue;
+      var tx = typeName(x), same = D.sheet[x] === D.sheet[v];
+      if (!same) continue;                                  // landmarks on the same floor only
+      if (tx === 'ELEVATOR' || tx === 'RESTROOM' || tx === 'STAIRS' || tx === 'ENTRANCE') {
+        if (!best[tx] || r.dist[x] < best[tx].d) best[tx] = { v: x, d: r.dist[x] };
+      } else if (tx === 'ROOM' || tx === 'CLASSROOM' || tx === 'CAFE' || tx === 'RESTAURANT') {
+        close.push({ v: x, d: r.dist[x] });
+      }
+    }
+    var kinds = [['ELEVATOR', 'elevator'], ['RESTROOM', 'restroom'], ['STAIRS', 'stairs'], ['ENTRANCE', 'entrance']], bits = [];
+    kinds.forEach(function (k) {
+      if (best[k[0]] && k[0] !== t) bits.push(Math.max(1, Math.round(meters(best[k[0]].d))) + ' m to the nearest ' + k[1]);
+    });
+    if (bits.length) out.push('On this floor: ' + bits.join(', ') + '.');
+    close.sort(function (a, b) { return a.d - b.d; });
+    if (close.length) out.push('Close to ' + close.slice(0, 3).map(function (c) { return name(c.v); }).join(', ') + '.');
+    return out.join(' ');
+  }
+
   // ---------- directions ----------
   function edgeKind(e) {
     var t = D.edgeTypes[e.t];
@@ -223,13 +254,32 @@
       });
     }
   }
-  function search(query, limit) {
+  var KINDS = {
+    room: ['ROOM', 'OTHER'], class: ['CLASSROOM'], restroom: ['RESTROOM'], elevator: ['ELEVATOR'],
+    stairs: ['STAIRS'], food: ['CAFE', 'RESTAURANT', 'VENDOR'], entrance: ['ENTRANCE'], building: ['BUILDING', 'OUTDOOR']
+  };
+  // filter = { building: 'SSE' or '', kind: 'class' or '', floor: 'Ground' or '' }
+  function passes(v, f) {
+    if (!f) return true;
+    if (f.building && building(v)[0] !== f.building) return false;
+    if (f.floor && floorName(v) !== f.floor) return false;
+    if (f.kind && KINDS[f.kind].indexOf(typeName(v)) < 0) return false;
+    return true;
+  }
+  function floorsOf(code) {
+    var out = [];
+    D.sheets.forEach(function (s) { if (D.buildings[s[1]][0] === code && out.indexOf(s[3]) < 0) out.push(s[3]); });
+    return out;
+  }
+  function search(query, limit, filter) {
     if (!searchIndex) buildSearch();
     var q = query.toLowerCase().trim();
-    if (!q) return [];
-    var tokens = q.split(/\s+/), out = [];
+    var active = filter && (filter.building || filter.kind || filter.floor);
+    if (!q && !active) return [];
+    var tokens = q ? q.split(/\s+/) : [], out = [];
     for (var i = 0; i < searchIndex.length; i++) {
-      var item = searchIndex[i], ok = true, score = 0;
+      var item = searchIndex[i], ok = passes(item.v, filter), score = 0;
+      if (!ok) continue;
       for (var t = 0; t < tokens.length; t++) {
         var at = item.hay.indexOf(tokens[t]);
         if (at < 0) { ok = false; break; }
@@ -256,7 +306,7 @@
     init: init, name: name, building: building, sheetOf: sheetOf, typeName: typeName, isWaypoint: isWaypoint,
     isOutdoors: isOutdoors, place: place, floorName: floorName, meters: meters,
     dijkstra: dijkstra, route: route, nearest: nearest, steps: steps,
-    search: search, findKey: findKey, formatTime: formatTime, formatMeters: formatMeters,
+    describe: describe, search: search, floorsOf: floorsOf, buildings: function () { return D.buildings; }, findKey: findKey, formatTime: formatTime, formatMeters: formatMeters,
     count: function () { return N; },
     data: function () { return D; }
   };

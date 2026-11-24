@@ -43,6 +43,22 @@
         </button>
       </div>
 
+      <div class="filters" id="filters" aria-label="Narrow the search">
+        <div class="filter-row">
+          <select id="fBuilding" aria-label="Building"><option value="">All buildings</option></select>
+          <select id="fFloor" aria-label="Floor" disabled><option value="">Any floor</option></select>
+        </div>
+        <div class="chips" id="fKinds" role="group" aria-label="Kind of place">
+          <button type="button" class="chip" data-kind="class" aria-pressed="false">Classrooms</button>
+          <button type="button" class="chip" data-kind="room" aria-pressed="false">Offices and rooms</button>
+          <button type="button" class="chip" data-kind="restroom" aria-pressed="false">Restrooms</button>
+          <button type="button" class="chip" data-kind="elevator" aria-pressed="false">Elevators</button>
+          <button type="button" class="chip" data-kind="food" aria-pressed="false">Food</button>
+          <button type="button" class="chip" data-kind="entrance" aria-pressed="false">Entrances</button>
+        </div>
+        <button type="button" class="text-btn" id="fReset" hidden>Clear filters</button>
+      </div>
+
       <form id="planner" autocomplete="off">
         <div class="field" id="fromField">
           <svg class="field-icon"><use href="#i-start"/></svg>
@@ -130,6 +146,7 @@
 <div class="pop" id="pop" hidden></div>
 
 <script src="data.js"></script>
+<script src="plans.js"></script>
 <script src="engine.js"></script>
 <script src="app.js"></script>
 </body>

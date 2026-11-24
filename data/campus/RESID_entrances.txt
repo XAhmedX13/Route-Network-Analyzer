@@ -7,3 +7,13 @@ RESID_P_EN05 S Residence_Cluster_5_Door
 RESID_P_EN06 S Residence_Cluster_6_Door
 RESID_P_EN07 N Residence_Cluster_7_Door
 RESID_P_EN08 E Residence_Administration_Entry
+RESID_P_EN09 S Residence_Cluster_9_Door
+RESID_P_EN10 E Residence_Cluster_10_Door
+RESID_P_EN11 S Residence_Study_Entry
+RESID_P_EN12 E Residence_C12A_Entrance
+RESID_P_EN13 E Residence_C12B_Entrance
+RESID_P_EN14 W Residence_C12C_Entrance
+RESID_P_EN15 W Residence_C12D_Entrance
+RESID_P_EN16 S Residence_Cluster_13_Door
+RESID_P_EN17 W Residence_Cluster_14_Door
+RESID_P_EN18 E Residence_Cluster_15_Door

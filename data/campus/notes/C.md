@@ -110,3 +110,22 @@ Further CC all-room transcription: Plaza 252, First 195 and Second 20 vertices, 
 - This remains an incomplete transcription: sweep every CC wing and all LIB and JAMEEL sheets for missed R.NO. labels, shafts and entrances. The presence of a room number does not prove a valid route.
 - Many newly added door waypoints are approximate, especially the First-floor and later Plaza additions, and each is connected to a nearest existing corridor waypoint without checking intervening walls. Second-floor mechanical-room access is also provisional. Trace the actual door and corridor network on the drawings before relying on walking routes or accessibility.
 - Check repeated CC R.NO. occurrences against their positions and reconcile any duplicate representation caused by earlier schematic coordinates. Check their room-use labels and floor-specific suffixes. C_DONE.txt must not be created until the complete inventory has been established.
+
+Latest continuation: CC First gained additional west-wing offices and a distinct auditorium 1001; CC now has Plaza 252, First 237 and Second 20 vertices, 509 vertices and 511 edges. LIB gained Garden G063 and Plaza P036: Garden 174, Plaza 154, First 92, Second 90, Third 86, total 596 vertices and 623 edges. JAMEEL gained Plaza P063, P070 and P100, First 1014, and Second 2012, 2014, 2019, 2116 and an eastern 2117 occurrence; Plaza 245, First 220, Second 322, total 787 vertices and 807 edges. Structural checks pass and updated floor sketches were regenerated.
+
+### To check later
+
+- This is still an incomplete all-room sweep. Finish all sheets, including room-number shapes obscured by furniture, and reconcile shafts, entrances and graph geometry. Do not write C_DONE.txt until all three buildings are complete.
+- JAMEEL Second has two distinct spaces visibly numbered 2117; the eastern office uses key JAMEEL_F2_2117_E. Verify all same-floor repeated numbers and any false duplicates caused by earlier estimated coordinates.
+- Newly selected door points are read or estimated from the drawings but their connections to existing corridor points are schematic and may cross walls; trace and adjust those paths. Earlier CC additions also contain estimated door positions and direct corridor links; connectivity and loader checks do not validate geometry or room completeness.
+
+Further small additions: CC First office 1058 and JAMEEL Second room 2155. Latest totals are CC 511 vertices, 513 edges (Plaza 252, First 239, Second 20) and JAMEEL 789 vertices, 809 edges (Plaza 245, First 220, Second 324). The respective floor sketches were regenerated. Door positions and corridor links are drafts and still require the geometry review described above.
+
+Continuation: LIB First gained shelving 1039, Second gained elevator-service room 2041, and Third gained elevator-service room 3045. Third-floor rooms 3038 and 3039 and their doorway coordinates were corrected from the floor drawing and connected through study area 3037. LIB now has 602 vertices and 629 edges: Garden 174, Plaza 154, First 94, Second 92 and Third 88. CC First gained office 1061 and the coordinates and door links for offices 1059 and 1060 were adjusted from the floor plan; CC now has 513 vertices and 515 edges (Plaza 252, First 241, Second 20). JAMEEL Second gained offices 2073, 2079, 2107 and 2109; JAMEEL now has 797 vertices and 817 edges (Plaza 245, First 220, Second 332). Edited sketches were refreshed and structural checks pass.
+
+### To check later
+
+- CC 1061 and JAMEEL 2073 are partly obscured by furniture and their number readings should be confirmed. Office and elevator-service access, room use, and paths from door points to modeled corridors remain provisional; in particular, a connected graph does not establish that a route avoids walls or that service-room doors are usable.
+- Finish the full room, shaft and entrance sweep across all three buildings and reconcile existing schematic positions and repeated same-floor numbers. Do not create C_DONE.txt until the work is complete.
+
+Latest LIB Plaza pass added P045, an office whose last digit is partly obscured by furniture; the code is inferred from the visible digits and neighboring numbering and needs confirmation. LIB now has 604 vertices and 631 edges (Garden 174, Plaza 156, First 94, Second 92, Third 88). Its Plaza sketch was refreshed, and the structural check passes. All-room coverage and physical paths remain to be checked.

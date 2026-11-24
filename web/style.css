@@ -341,3 +341,24 @@ ol, ul { list-style: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .draw { stroke-dashoffset: 0; }
 }
+
+/* search filters */
+.filters { margin-bottom: 12px; }
+.filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.filter-row select {
+  height: 38px; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .08);
+  color: var(--sign-text); padding: 0 8px; font-size: 14px; min-width: 0;
+}
+.filter-row select option { color: #0F2A43; }
+.filter-row select:disabled { opacity: .5; }
+#fKinds .chip { height: 32px; font-size: 13.5px; padding: 0 11px; }
+#fReset { margin-top: 8px; color: var(--sign-soft); }
+
+/* the real drawing under the route */
+.plan-img { opacity: .85; pointer-events: none; }
+#campusSvg .plan-img { opacity: .4; }
+:root[data-theme="dark"] .plan-img { filter: invert(1) hue-rotate(180deg); opacity: .55; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plan-img { filter: invert(1) hue-rotate(180deg); opacity: .55; } }
+
+.pop .about { font-size: 12.5px; line-height: 1.4; color: var(--ink-soft); margin: 0 0 10px; }
+.hint { line-height: 1.35; }

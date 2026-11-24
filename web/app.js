@@ -68,13 +68,37 @@
       const f = Math.exp(e.deltaY * 0.0016), p = self.toUser(e.clientX, e.clientY);
       self.zoomAt(p.x, p.y, f);
     }, { passive: false });
-    let drag = null;
+    // one pointer pans, two fingers pinch to zoom and drag the map together
+    const ptr = new Map();
+    let drag = null, pinch = null;
     svg.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      drag = { x: e.clientX, y: e.clientY, vx: self.vb.x, vy: self.vb.y, moved: false };
-      self.moved = false;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      ptr.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ptr.size === 2) {
+        const [a, b] = Array.from(ptr.values());
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, w: self.vb.w, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+        drag = null; self.moved = true;
+      } else if (ptr.size === 1) {
+        drag = { x: e.clientX, y: e.clientY, vx: self.vb.x, vy: self.vb.y, moved: false };
+        self.moved = false;
+      }
     });
     window.addEventListener('pointermove', (e) => {
+      if (!ptr.has(e.pointerId)) return;
+      ptr.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && ptr.size >= 2) {
+        const [a, b] = Array.from(ptr.values());
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const bw = self.base ? self.base.w : self.vb.w;
+        const targetW = Math.min(Math.max(pinch.w * pinch.d / d, bw * 0.03), bw * 3);
+        // zoom around the point that was between the fingers, then follow the fingers across the map
+        const p = self.toUser(pinch.mx, pinch.my);
+        self.zoomAt(p.x, p.y, targetW / self.vb.w);
+        const k = self.scale();
+        self.vb.x -= (mx - pinch.mx) / k; self.vb.y -= (my - pinch.my) / k;
+        pinch.mx = mx; pinch.my = my; self.apply(); svg.classList.add('drag');
+        return;
+      }
       if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       if (!drag.moved && Math.hypot(dx, dy) < 4) return;
@@ -82,10 +106,17 @@
       const k = self.scale();
       self.vb.x = drag.vx - dx / k; self.vb.y = drag.vy - dy / k; self.apply();
     });
-    window.addEventListener('pointerup', () => {
-      drag = null; svg.classList.remove('drag');
-      setTimeout(() => { self.moved = false; }, 0);
-    });
+    function lift(e) {
+      ptr.delete(e.pointerId);
+      if (ptr.size < 2) pinch = null;
+      if (ptr.size === 1) {          // one finger stays down: keep panning from where it is
+        const r = Array.from(ptr.values())[0];
+        drag = { x: r.x, y: r.y, vx: self.vb.x, vy: self.vb.y, moved: true };
+      }
+      if (ptr.size === 0) { drag = null; svg.classList.remove('drag'); setTimeout(() => { self.moved = false; }, 0); }
+    }
+    window.addEventListener('pointerup', lift);
+    window.addEventListener('pointercancel', lift);
     svg.addEventListener('dblclick', () => self.reset());
   }
   PanZoom.prototype.scale = function () {
@@ -131,6 +162,13 @@
   const campusSvg = $('campusSvg'), floorSvg = $('floorSvg');
   const pzC = new PanZoom(campusSvg), pzF = new PanZoom(floorSvg);
 
+  // the real drawing of the sheet (rendered from the floor plan PDF) goes under the route
+  function planImage(si) {
+    const id = D.sheets[si][0], size = window.PLANS && window.PLANS[id];
+    if (!size) return '';
+    return '<image class="plan-img" href="plans/' + id + '.png" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '" preserveAspectRatio="none"/>';
+  }
+
   // ---------- campus map ----------
   let campusU = 1, campusBox = null;
   function pointOf(v) {
@@ -151,7 +189,7 @@
     sheetEdges[campusSheet].forEach((k) => {
       d += 'M' + D.x[D.ea[k]] + ' ' + D.y[D.ea[k]] + 'L' + D.x[D.eb[k]] + ' ' + D.y[D.eb[k]];
     });
-    let h = '<g id="cBase">';
+    let h = '<g id="cBase">' + planImage(campusSheet);
     h += '<path class="road-edge" d="' + d + '" stroke-width="' + 13 * u + '"/>';
     h += '<path class="road" d="' + d + '" stroke-width="' + 10 * u + '"/>';
     sheetVerts[campusSheet].forEach((v) => {
@@ -204,7 +242,7 @@
       sheetEdges[si].forEach((k) => {
         d += 'M' + D.x[D.ea[k]] + ' ' + D.y[D.ea[k]] + 'L' + D.x[D.eb[k]] + ' ' + D.y[D.eb[k]];
       });
-      let h = '<g id="fBase" class="fade-in"><path class="plan-edges" d="' + d + '" stroke-width="' + 1.1 * u + '"/>';
+      let h = '<g id="fBase" class="fade-in">' + planImage(si) + '<path class="plan-edges" d="' + d + '" stroke-width="' + 1.1 * u + '"/>';
       sheetVerts[si].forEach((v) => {
         if (E.isWaypoint(v)) return;
         const cls = vClass(v), special = cls && cls !== 'other';
@@ -461,6 +499,37 @@
   }
   function pause() { S.playing = false; updatePlayBtn(); renderAt(S.p); }
 
+  // ---------- search filters ----------
+  const FILTER = { building: '', kind: '', floor: '' };
+  const bSel = $('fBuilding'), fSel = $('fFloor'), kBox = $('fKinds'), rBtn = $('fReset');
+  E.buildings().forEach((b) => {
+    if (b[0] === 'CAMPUS') return;
+    const o = document.createElement('option'); o.value = b[0]; o.textContent = b[1]; bSel.appendChild(o);
+  });
+  function filtersChanged() {
+    rBtn.hidden = !(FILTER.building || FILTER.kind || FILTER.floor);
+    kBox.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.kind === FILTER.kind)));
+    // the field being typed in shows the new list right away
+    fromField.refresh(); toField.refresh();
+  }
+  bSel.addEventListener('change', () => {
+    FILTER.building = bSel.value; FILTER.floor = '';
+    fSel.innerHTML = '<option value="">Any floor</option>';
+    if (FILTER.building) E.floorsOf(FILTER.building).forEach((f) => {
+      const o = document.createElement('option'); o.value = f; o.textContent = f + ' floor'; fSel.appendChild(o);
+    });
+    fSel.disabled = !FILTER.building; filtersChanged();
+  });
+  fSel.addEventListener('change', () => { FILTER.floor = fSel.value; filtersChanged(); });
+  kBox.addEventListener('click', (e) => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    FILTER.kind = FILTER.kind === c.dataset.kind ? '' : c.dataset.kind; filtersChanged();
+  });
+  rBtn.addEventListener('click', () => {
+    FILTER.building = FILTER.kind = FILTER.floor = ''; bSel.value = ''; fSel.disabled = true;
+    fSel.innerHTML = '<option value="">Any floor</option>'; filtersChanged();
+  });
+
   // ---------- search fields ----------
   function Field(kind) {
     const input = $(kind + 'Input'), list = $(kind + 'List'), clear = $(kind + 'Clear'), hint = $(kind + 'Hint');
@@ -468,7 +537,7 @@
     const self = {
       set(v, silent) {
         S[kind] = v; input.value = v >= 0 ? E.name(v) : '';
-        hint.textContent = v >= 0 ? E.place(v) : '';
+        hint.textContent = v >= 0 ? E.describe(v) : '';
         clear.hidden = v < 0 && !input.value;
         close();
         if (!silent) onPick();
@@ -477,7 +546,7 @@
     };
     function close() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; }
     function open() {
-      items = E.search(input.value, 8);
+      items = E.search(input.value, (FILTER.building || FILTER.kind || FILTER.floor) ? 40 : 8, FILTER);
       if (!items.length) { close(); return; }
       list.innerHTML = items.map((v, k) => '<li role="option" data-k="' + k + '" aria-selected="false">' + icon(typeIcon(v)) +
         '<div><b>' + esc(E.name(v)) + '</b><span>' + esc(E.place(v)) + '</span></div></li>').join('');
@@ -490,7 +559,8 @@
     input.addEventListener('input', () => {
       S[kind] = -1; hint.textContent = ''; clear.hidden = !input.value; open();
     });
-    input.addEventListener('focus', () => { if (input.value && S[kind] < 0) open(); input.select(); });
+    input.addEventListener('focus', () => { if ((input.value || FILTER.building || FILTER.kind || FILTER.floor) && S[kind] < 0) open(); input.select(); });
+    self.refresh = () => { if (document.activeElement === input && S[kind] < 0) open(); };
     input.addEventListener('blur', () => setTimeout(close, 120));
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) open(); mark(Math.min(items.length - 1, active + 1)); }
@@ -652,10 +722,10 @@
         setSheet(pick.si, { animate: true }); pop.hidden = true; return;
       }
       const v = +t.dataset.v;
-      pop.innerHTML = '<b>' + esc(E.name(v)) + '</b><small>' + esc(E.place(v)) + '</small><div class="row"><button type="button" class="from">From here</button><button type="button" class="to">To here</button></div>';
+      pop.innerHTML = '<b>' + esc(E.name(v)) + '</b><small>' + esc(E.place(v)) + '</small><p class="about">' + esc(E.describe(v)) + '</p><div class="row"><button type="button" class="from">From here</button><button type="button" class="to">To here</button></div>';
       pop.hidden = false;
       pop.style.left = Math.max(8, Math.min(window.innerWidth - 256, e.clientX - 120)) + 'px';
-      pop.style.top = Math.min(window.innerHeight - 140, e.clientY + 12) + 'px';
+      pop.style.top = Math.max(8, Math.min(window.innerHeight - 250, e.clientY + 12)) + 'px';
       pop.dataset.v = v; tip.hidden = true;
     });
   }

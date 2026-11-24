@@ -139,3 +139,86 @@ Inspected the residence administration/service wing on the Plaza drawing and add
 ### To check later
 
 The admin-wing room-to-waypoint edges and entrance orientation/position are approximate, and duplicate P017 labels in the drawing need a closer review. First-floor mechanical room 1001 and elevator-machine room 1002 appear on the roof portion above this area; their accessible route or stair landing was not established and they remain to be added. Remaining residence clusters, PP rooms and SPORTS details are not complete. Do not mark D done.
+
+## PP thin-stroke inspection and expansion
+
+The original PP PDFs use unusually thick 0.72-point strokes that obscure many vector labels. For inspection only, exported the drawing as SVG and reduced stroke widths before rendering; the original PDFs remain unchanged. This exposed labels in the Garden administration and plant wings and the Plaza office wings. Added 94 candidate PP room vertices, door points and plant-corridor waypoints; corrected the inherited Garden G011 label to backup data center. Identical room codes occur in the separate plant and administration wings, so plant keys carry `_PLANT`. PP now has 242 vertices and 243 edges (Garden 175, Plaza 67), and `python tools/C_check.py PP` passes. Added SPORTS First offices 1006C and 1006D; SPORTS is 232 vertices and 238 edges and passes its structural check. Updated PP and SPORTS sketches.
+
+The campus links were rebuilt from all currently available entrance inventories, with existing ADMIN and cluster-specific mappings retained; 41 entrance links were reported and none unmatched. The latest merge reports 6,124 locations, 6,304 edges and one component. A merged graph capacity of at least 6,124 is required.
+
+### To check later
+
+The thin-stroke exports improve readability but several PP labels, room types and all wings have not yet been completely transcribed. PP door candidates were selected from nearby vector curves; a nearby curve is not proof of the correct door, and connections to selected corridor points can still cross walls. Existing inherited PP Garden G011 connections and the long bridge between administration and plant require geometric review after the G011 correction. PP, SPORTS and the remaining RESID clusters are not complete; this is not a done marker.
+
+
+## Latest PP and RESID additions
+
+Thin-stroke PP renders revealed 17 additional Garden plant R.NO. labels and nine Plaza administration R.NO. labels. Added those spaces with provisional door points. Added seven Garden plant corridor waypoints and rerouted some nearby existing door points to reduce long connections. PP now has 301 vertices and 302 edges (Garden 216, Plaza 85); the structural checker passes after both floor updates.
+
+Compared the previously unmodeled residence block around the P-010 annotation at (584,679) with the source block at (1361,519) on all three floor sheets. Added provisional cluster C9 by translating the first-cluster draft (-777,+160), with separate Plaza entrance and outdoor point. Per-floor cluster-aware checks pass; RESID has 1,270 vertices and 1,277 edges in nine components, each with an entrance. Added a provisional CORE southwest campus point for a newly published entrance and rebuilt campus links; all currently published entrance keys match. The latest merge reports one component, 6,400 locations and 6,583 edges. Updated PP, RESID and campus sketches.
+
+### To check later
+
+PP room positions, room classifications, door-arc selection and connecting segments remain approximate; some nearest-corridor paths may cross walls. C9 inherits the source cluster's unverified rooms, connections and shaft matches; even though a similar footprint appears on each floor, review its actual rooms and entrance individually. Other RESID clusters and SPORTS and PP R.NO. labels remain missing. D is not complete.
+
+## RESID C10 and PP yard additions
+
+Compared the residence block with Plaza P-010 near (198,1480) to the original block near (1361,519); the visible plan is approximately reflected across the diagonal, and corresponding First and Second annotations were located. Added a provisional C10 cluster by this coordinate transform on each floor, with its own entrance and estimated outdoor link. Each floor update passed the cluster-aware check. RESID now has 1,424 vertices and 1,432 edges, in ten separately entered indoor components.
+
+The PP Garden thin-stroke drawing also shows yard offices, lockers and warehouse labels G001–G012 and G091/G096 in separate structures. Added 14 room vertices, candidate door points, and six outdoor/corridor approach points; PP now has 335 vertices and 336 edges, and its structural checker passes. Rebuilt current entrance links (44 matched, none unmatched); latest merge has one component, 6,609 locations and 6,794 edges. Updated the affected sketches.
+
+### To check later
+
+C10 is derived from the first cluster's draft; room codes, shaft matches, entrance location and routes must be checked independently. Its Second-floor anchor differs somewhat from the transformed position. PP yard-room classifications, door points and outdoor route geometry are estimates, and the long service-yard approaches need visual review. Additional RESID clusters and rooms across all three job D buildings remain. Do not mark D done.
+
+## Further PP Garden labels
+
+Added seven Garden plant room labels (G058, G060, G061, G063, G064, G066 and G067) from thin-stroke renders, with candidate door waypoints. PP is now 349 vertices and 350 edges (Garden 264, Plaza 85) and passes the structural checker. Rebuilt current campus entrance links and reran the merge: one component, 6,626 locations and 6,811 edges. Refreshed the Garden sketch.
+
+### To check later
+
+These room types, door-curve matches and paths are provisional; some edges can cross walls. The complete PP, SPORTS and RESID inventories are still unfinished. Do not mark D done.
+
+## PP Plaza and residence study-wing additions
+
+Inspected the thin-stroke PP Plaza plant office band, added nine labeled spaces and six corridor waypoints on its south side, then ran `python tools/C_check.py PP`. PP now has 373 vertices and 374 edges (Garden 264, Plaza 109).
+
+Inspected the residence Plaza study/laundry wing separately and added 14 labeled spaces, candidate door waypoints selected from nearby PDF curves, four hall waypoints and a separate Plaza entrance/outdoor link, using `_C11` to distinguish repeated local codes. `python tools/D_resid_check.py` passes: RESID has 1,457 vertices and 1,464 edges in 11 separate indoor components, each with an entrance. Updated the PP Plaza, RESID Plaza and campus sketches. All currently published entrance keys match after rebuilding links.
+
+Latest merge: 6,695 vertices, 6,879 edges, two components: the main component contains all listed building codes, and a five-vertex CORE-only component is disconnected. CORE files are another worker's responsibility. The result can change while workers edit.
+
+### To check later
+
+Door-curve proximity is only a candidate matching method; the new PP and study-wing room-door and corridor paths must be checked against walls and actual entrances. The study-wing reception/entrance point and outdoors link are estimates. PP, SPORTS and RESID remain incomplete, including upper floors and additional residence clusters. Do not mark D done.
+
+## Additional PP Plaza offices
+
+Added the labeled Plaza administration offices P001 and P026 with candidate door points; PP has 377 vertices and 378 edges and passes its structural check. Updated its Plaza sketch. The final current merge reports 6,702 vertices, 6,886 edges and two components: a 6,697-vertex main component and five isolated CORE vertices. CORE is another worker's dataset.
+
+### To check later
+
+The two PP office-door arc matches and corridor approaches are estimates and need wall-by-wall review. The three job D building inventories remain incomplete; do not mark D done.
+
+## Residence C12 suites
+
+Visually inspected the rotated residence block around (1350,1570)–(1800,2000) on Plaza, First and Second. Added the visible labeled suite and room vertices as four separately entered draft components C12A–D, with Plaza entrances, room-door candidates and provisional position-matched stairs on consecutive floors. The cluster-aware structural check passed after each floor; RESID has 1,585 vertices and 1,588 edges across 15 entered components. Created four separate approximate campus-side door points, rebuilt all current entrance links (49, none unmatched), and refreshed RESID/campus sketches. The latest merge reports 6,889 vertices and 7,074 edges in two components: the 6,884-vertex main component and five isolated CORE vertices in another worker's data.
+
+### To check later
+
+The C12 rooms and entries were visually read, but positional shaft matches, local entrance sides, and selected nearby curve/door associations remain provisional; the four stairs may share circulation, which requires closer review. Corridor links may cross walls. Some local labels and additional clusters still need transcription. PP and SPORTS are also incomplete. Do not mark D done.
+
+## Additional eastern residence clusters
+
+Audited the C12 Second-floor suite labels, added two distinct spaces both labeled 2B using `_BATH` and `_SERVICE` key suffixes, and corrected several bathroom types. Identified a previously unmodeled far-east Plaza residence footprint, compared its First and Second drawings, and added provisional C13 by translating the source-cluster draft about (+1608,+528) PDF points. Identified another southeast footprint with a 90-degree transformed layout and added provisional C14 by applying x=3699−y and y=x+139 to that draft. Each has its own Plaza entrance and estimated outdoor point. The cluster-aware checker passed after each floor: RESID now has 1,897 vertices and 1,902 edges. Current entrance links were rebuilt; the latest merge reports 7,246 locations and 7,436 edges in two components, one of which is five CORE vertices in another worker's dataset. RESID and campus sketches were regenerated.
+
+### To check later
+
+C13 and C14 were initialized from a repeated draft and need independent room-by-room checking, particularly upper-floor layouts, matching stairs, door curves and entrance locations. C12's identically labeled 2B spaces require on-site confirmation. Candidate door connections may cross walls; site-plan placement and outdoor connections are estimates. Additional RESID, SPORTS and PP inventory remains; do not mark D done.
+
+## Latest PP and C12 audit
+
+Added PP Garden plant G008, G009, G010 and G011 from enlarged thin-stroke renders, with candidate door waypoints. PP is now 385 vertices and 386 edges and passes the structural checker. Audited C12 Second-floor duplicate 2B labels, added distinct bathroom and service-space points, and corrected visible bathroom types; those additions were made before the C13/C14 draft copies. Current RESID count is 1,897 vertices and 1,902 edges, and the cluster-aware checker passes. Updated the affected sketches and rebuilt all currently available entrance links (51 matched, none unmatched). Latest merge: 7,320 locations, 7,510 edges, two components; the isolated component contains five CORE vertices owned by another worker.
+
+### To check later
+
+Check PP G011 reading and room use against the densely overlaid drawing, all door curves and corridor routing. C12's repeated 2B labels and the new geometry require review. RESID upper-floor shaft matches, remaining clusters, and the complete PP and SPORTS inventories remain unfinished. Do not mark D done.

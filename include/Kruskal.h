@@ -10,20 +10,11 @@
  * We stop when we have V - 1 edges. If we cannot reach V - 1, the graph is
  * not connected, so there is no MST.
  */
- */
 
 #ifndef KRUSKAL_H
 #define KRUSKAL_H
 
 #include "Graph.h"
-
-// One edge of the MST. We declare it here for now.
-// If the final Graph.h declares MSTEdge, we delete this struct.
-struct MSTEdge {
-    int fromID;
-    int toID;
-    int weight;
-};
 
 // Copies each edge once into edges. Returns the count, -1 if edges is null or too small
 int collectEdges(const Graph& graph, MSTEdge* edges, int capacity);

@@ -92,7 +92,10 @@ V = locations, E = connections, h = BST height.
 ## 6. Data Decisions
 
 - The Milestone 2 dataset is a small SSE-centered sample (about 20–35 vertices) rather than the large supplied dataset.
-- Weights are non-negative integers in estimated cost units; they are not labelled as meters until verified.
+- Weights are positive integers (the loader rejects 0 and negative values). The unit is a PDF point of the 1:200 floor plans, about 7 cm, so weights are estimates and are not labelled as meters.
+- The data files are space separated, so no field may contain a space (labels use `_`).
+- Besides the small SSE demo in `data/`, the whole university (11 buildings joined by the campus walkways) is in `data/campus/`. It is built from the AUC floor plans: room names are text in the PDFs, room numbers are drawings that were read visually, and `tools/merge_campus.py` joins the per-building files into `all_locations.txt` and `all_edges.txt`.
+- The graph is an adjacency list, so the whole campus (about 5800 locations and 6000 edges) needs roughly 12 000 edge nodes instead of about 34 million matrix cells, and it loads in a few milliseconds.
 - Coordinates (x, y) are for display only and are not used as routing weights.
 - Each undirected edge appears once in `edges.txt` and is stored in both adjacency lists, but counted once.
 - Search keys are unique (for example `SSE_First_Room_101`); labels may repeat (several "Stairs").

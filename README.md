@@ -47,6 +47,14 @@ Start it directly with `./build/campus_app`. To load a different dataset:
 ./build/campus_app path/to/locations.txt path/to/edges.txt
 ```
 
+The whole university (about 5800 locations, all buildings joined by the campus walkways) is in `data/campus/`:
+
+```bash
+./build/campus_app data/campus/all_locations.txt data/campus/all_edges.txt
+```
+
+`data/campus/all_*.txt` is built from the per-building files by `python tools/merge_campus.py`.
+
 ## Using the Program
 
 ```
@@ -77,27 +85,27 @@ Route (5 stops, total cost 36):
 
 ## Input Format
 
-Both files are in `data/`, use `|` between fields, and start with a header line.
+Both files use a **space** between fields and start with a header line. No field may contain a space, so write `Room_101`, not `Room 101`.
 
 `data/locations.txt`: one location per line, IDs 0, 1, 2, ... in order:
 
 ```
-ID|Key|Label|Type|Building|FloorIndex|FloorName|MapID|X|Y
-0|SSE_Plaza_Entrance_A|Entrance A|ENTRANCE|SSE|0|Plaza|SSE_PLZ|100|200
+ID Key Label Type Building FloorIndex FloorName MapID X Y
+0 SSE_Plaza_Entrance_A Entrance_A ENTRANCE SSE 0 Plaza SSE_PLZ 100 200
 ```
 
-- **Key**: unique, no spaces or `|`; this is what users type to search
+- **Key**: unique, no spaces; this is what users type to search
 - **Label**: the name shown to users; use `x` for an unnamed waypoint (kept for routing, hidden from lists and search)
 - **Type**: ENTRANCE, HALLWAY, ROOM, CLASSROOM, RESTROOM, ELEVATOR, STAIRS, OUTDOOR, BUILDING, CAFE, RESTAURANT, VENDOR, OTHER
 
 `data/edges.txt`: one undirected connection per line, listed once:
 
 ```
-FromID|ToID|Weight|EdgeType|Accessible
-0|1|12|CORRIDOR|1
+FromID ToID Weight EdgeType Accessible
+0 1 12 CORRIDOR 1
 ```
 
-- **Weight**: non-negative integer in estimated cost units (not verified meters)
+- **Weight**: positive integer (0 is rejected), in estimated units of about 7 cm (PDF points of the 1:200 floor plans), not verified meters
 - **EdgeType**: WALKWAY, CORRIDOR, STAIRS, ELEVATOR, RAMP, OTHER
 - **Accessible**: 1 or 0; stairs are always 0
 

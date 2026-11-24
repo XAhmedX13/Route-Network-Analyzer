@@ -10,7 +10,7 @@
 # Run make from the repository root. On Windows, use Git Bash or WSL.
 
 CXX      = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -Iinclude
+CXXFLAGS = -std=c++11 -Wall -Wextra -Wpedantic -Iinclude
 
 BUILD = build
 

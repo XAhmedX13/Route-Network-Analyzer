@@ -1,6 +1,6 @@
 """
 make_web_plans.py
-Draws every floor plan PDF as a colour picture, web/plans/<mapID>.jpg, and writes
+Draws every floor plan PDF as a colour picture, web/plans/<mapID>.webp, and writes
 web/plans.js with each picture's page size in PDF points. The web page puts the
 picture under the route so a person sees the real walls, rooms and roads.
 The graph coordinates are points of the displayed page, which is what
@@ -15,6 +15,7 @@ import re
 import sys
 
 import fitz
+from PIL import Image
 
 MAPS = "University maps"
 OUT = os.path.join("web", "plans")
@@ -59,8 +60,9 @@ def main():
         w, h = page.rect.width, page.rect.height
         zoom = LONG_SIDE / max(w, h)
         pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), colorspace=fitz.csRGB, alpha=False)
-        path = os.path.join(OUT, map_id + ".jpg")
-        pix.save(path, jpg_quality=72)
+        path = os.path.join(OUT, map_id + ".webp")
+        # WebP is about half the size of JPEG at the same look, which keeps the phone app small
+        Image.frombytes("RGB", (pix.width, pix.height), pix.samples).save(path, "WEBP", quality=68, method=6)
         sizes[map_id] = [round(w, 1), round(h, 1)]
         print(f"{map_id:10} {os.path.basename(pdf)[:50]:50} {int(w)}x{int(h)}  {os.path.getsize(path) // 1024} KB")
     with open(os.path.join("web", "plans.js"), "w", encoding="utf-8", newline="\n") as f:

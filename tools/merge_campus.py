@@ -18,6 +18,9 @@ Uses only the Python standard library.
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import snap_doors  # noqa: E402
+
 FOLDER = os.path.join("data", "campus")
 LOCATION_TYPES = {"ENTRANCE", "HALLWAY", "ROOM", "CLASSROOM", "RESTROOM", "ELEVATOR",
                   "STAIRS", "OUTDOOR", "BUILDING", "CAFE", "RESTAURANT", "VENDOR", "OTHER"}
@@ -131,6 +134,14 @@ def main():
             check_edge_fields(where, f[2], f[3], f[4])
             edges.append((key_to_id[f[0]], key_to_id[f[1]], f[2], f[3], f[4]))
             link_count += 1
+
+    # Join every door to the corridor point right in front of it (see snap_doors.py)
+    locations, edges, building_of, snapped = snap_doors.snap(locations, edges, building_of)
+    print(f"Snapped {snapped} doors and rooms onto the corridor in front of them")
+    locations, edges, building_of, tied = snap_doors.tie_routes(locations, edges, building_of)
+    print(f"Tied {tied} reroute points to the corridor right beside them")
+    edges, shortcuts = snap_doors.shortcut(locations, edges)
+    print(f"Added {shortcuts} short links that remove there-and-back turns")
 
     # Duplicate and self-loop check over the merged graph
     seen = set()

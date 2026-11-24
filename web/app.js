@@ -74,76 +74,129 @@
   }
 
   // ---------- pan and zoom for an svg ----------
+  // While a finger moves (or the map glides to a new place) the svg is only moved with a CSS transform,
+  // which the phone's graphics chip does for free. The real viewBox is set once at the end, so the
+  // big floor plan picture is drawn again only then. This is what keeps the map smooth on phones.
   function PanZoom(svg) {
-    this.svg = svg; this.vb = { x: 0, y: 0, w: 100, h: 100 }; this.base = null; this.moved = false; this.anim = 0;
+    this.svg = svg; this.vb = { x: 0, y: 0, w: 100, h: 100 }; this.base = null; this.moved = false;
+    this.g = null;         // gesture in progress: { s, tx, ty, r } (scale, shift in px, svg rectangle)
+    this.pending = null;   // a glide in progress: the viewBox it ends at, and its timer
     const self = this;
+    let wheelF = 1, wheelP = null, wheelQueued = false;
     svg.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const f = Math.exp(e.deltaY * 0.0016), p = self.toUser(e.clientX, e.clientY);
-      self.zoomAt(p.x, p.y, f);
+      self.finish();
+      wheelF *= Math.exp(e.deltaY * 0.0016); wheelP = self.toUser(e.clientX, e.clientY);
+      if (!wheelQueued) {
+        wheelQueued = true;
+        requestAnimationFrame(() => { wheelQueued = false; self.zoomAt(wheelP.x, wheelP.y, wheelF); wheelF = 1; });
+      }
+      self.userMoved = performance.now();
     }, { passive: false });
-    // one pointer pans, two fingers pinch to zoom and drag the map together
+
     const ptr = new Map();
-    let drag = null, pinch = null;
+    let pinch = null, pan = null, queued = false;
+    function show() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (self.g) svg.style.transform = 'translate(' + self.g.tx + 'px,' + self.g.ty + 'px) scale(' + self.g.s + ')';
+      });
+    }
+    function startGesture() {
+      if (self.g) return;
+      self.finish();
+      self.g = { s: 1, tx: 0, ty: 0, r: svg.getBoundingClientRect() };
+      svg.classList.add('drag');
+    }
+    function startPinch() {
+      const pts = Array.from(ptr.values()), a = pts[0], b = pts[1], g = self.g;
+      const mx = (a.x + b.x) / 2 - g.r.left, my = (a.y + b.y) / 2 - g.r.top;
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: g.s, lx: (mx - g.tx) / g.s, ly: (my - g.ty) / g.s };
+      pan = null;
+    }
+    function startPan(p) { const g = self.g; pan = { x: p.x, y: p.y, tx: g.tx, ty: g.ty, moved: false }; }
     svg.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      cancelAnimationFrame(self.anim);
       ptr.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (ptr.size === 2) {
-        const [a, b] = Array.from(ptr.values());
-        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, w: self.vb.w, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
-        drag = null; self.moved = true;
-      } else if (ptr.size === 1) {
-        drag = { x: e.clientX, y: e.clientY, vx: self.vb.x, vy: self.vb.y, moved: false };
-        self.moved = false;
-      }
+      startGesture();
+      if (ptr.size === 2) { startPinch(); self.moved = true; }
+      else if (ptr.size === 1) { startPan(ptr.get(e.pointerId)); self.moved = false; }
     });
     window.addEventListener('pointermove', (e) => {
-      if (!ptr.has(e.pointerId)) return;
+      if (!ptr.has(e.pointerId) || !self.g) return;
       ptr.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const g = self.g;
       if (pinch && ptr.size >= 2) {
-        const [a, b] = Array.from(ptr.values());
-        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const pts = Array.from(ptr.values()), a = pts[0], b = pts[1];
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const mx = (a.x + b.x) / 2 - g.r.left, my = (a.y + b.y) / 2 - g.r.top;
         const bw = self.base ? self.base.w : self.vb.w;
-        const targetW = Math.min(Math.max(pinch.w * pinch.d / d, bw * 0.03), bw * 3);
-        // zoom around the point that was between the fingers, then follow the fingers across the map
-        const p = self.toUser(pinch.mx, pinch.my);
-        self.zoomAt(p.x, p.y, targetW / self.vb.w);
-        const k = self.scale();
-        self.vb.x -= (mx - pinch.mx) / k; self.vb.y -= (my - pinch.my) / k;
-        pinch.mx = mx; pinch.my = my; self.apply(); svg.classList.add('drag');
+        const sMin = self.vb.w / (bw * 3), sMax = self.vb.w / (bw * 0.03);
+        g.s = Math.min(sMax, Math.max(sMin, pinch.s0 * d / pinch.d));
+        g.tx = mx - g.s * pinch.lx; g.ty = my - g.s * pinch.ly;     // the point under the fingers stays under them
         self.userMoved = performance.now();
+        show();
         return;
       }
-      if (!drag) return;
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (!drag.moved && Math.hypot(dx, dy) < 5) return;
-      drag.moved = true; self.moved = true; svg.classList.add('drag');
-      const k = self.scale();
-      self.vb.x = drag.vx - dx / k; self.vb.y = drag.vy - dy / k; self.apply();
+      if (!pan) return;
+      const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
+      if (!pan.moved && Math.hypot(dx, dy) < 5) return;
+      pan.moved = true; self.moved = true;
+      g.tx = pan.tx + dx; g.ty = pan.ty + dy;
       self.userMoved = performance.now();
+      show();
     });
     function lift(e) {
+      if (!ptr.has(e.pointerId)) return;
       ptr.delete(e.pointerId);
       if (ptr.size < 2) pinch = null;
-      if (ptr.size === 1) {          // one finger stays down: keep panning from where it is
-        const r = Array.from(ptr.values())[0];
-        drag = { x: r.x, y: r.y, vx: self.vb.x, vy: self.vb.y, moved: true };
+      if (ptr.size === 1) startPan(Array.from(ptr.values())[0]);   // one finger stays down: keep panning
+      if (ptr.size === 0) {
+        pan = null;
+        self.commit();
+        setTimeout(() => { self.moved = false; }, 0);
       }
-      if (ptr.size === 0) { drag = null; svg.classList.remove('drag'); setTimeout(() => { self.moved = false; }, 0); }
     }
     window.addEventListener('pointerup', lift);
     window.addEventListener('pointercancel', lift);
-    svg.addEventListener('dblclick', (e) => { const p = self.toUser(e.clientX, e.clientY); self.zoomAt(p.x, p.y, 0.55); });
+    svg.addEventListener('dblclick', (e) => { self.finish(); const p = self.toUser(e.clientX, e.clientY); self.zoomAt(p.x, p.y, 0.55); });
   }
-  PanZoom.prototype.scale = function () {
-    const r = this.svg.getBoundingClientRect();
-    return Math.min(r.width / this.vb.w, r.height / this.vb.h) || 1;
+  // map from the svg's own rectangle (no CSS transform) to drawing units
+  PanZoom.prototype.frame = function (r) {
+    r = r || this.svg.getBoundingClientRect();
+    const k = Math.min(r.width / this.vb.w, r.height / this.vb.h) || 1;
+    return { r: r, k: k, ox: this.vb.x - (r.width / k - this.vb.w) / 2, oy: this.vb.y - (r.height / k - this.vb.h) / 2 };
   };
+  PanZoom.prototype.scale = function () { return this.frame().k; };
   PanZoom.prototype.toUser = function (cx, cy) {
-    const r = this.svg.getBoundingClientRect(), k = this.scale();
-    const ox = this.vb.x + (r.width / k - this.vb.w) / -2, oy = this.vb.y + (r.height / k - this.vb.h) / -2;
-    return { x: ox + (cx - r.left) / k, y: oy + (cy - r.top) / k };
+    const f = this.frame();
+    return { x: f.ox + (cx - f.r.left) / f.k, y: f.oy + (cy - f.r.top) / f.k };
+  };
+  // end of a finger gesture: turn the CSS transform into the real viewBox
+  PanZoom.prototype.commit = function () {
+    const g = this.g; if (!g) return;
+    this.g = null;
+    this.svg.classList.remove('drag');
+    if (g.s !== 1 || g.tx || g.ty) {
+      const f = this.frame(g.r);
+      this.vb = { x: f.ox + (-g.tx / g.s) / f.k, y: f.oy + (-g.ty / g.s) / f.k, w: g.r.width / (g.s * f.k), h: g.r.height / (g.s * f.k) };
+    }
+    this.svg.style.transform = '';
+    this.apply();
+  };
+  // finish a glide or a gesture right away (before anything else moves the map)
+  PanZoom.prototype.finish = function () {
+    if (this.g) this.commit();
+    if (this.pending) {
+      clearTimeout(this.pending.timer);
+      const t = this.pending.target;
+      this.pending = null;
+      this.svg.style.transition = 'none';
+      this.svg.style.transform = '';
+      this.vb = t; this.apply();
+    }
   };
   PanZoom.prototype.apply = function () {
     this.svg.setAttribute('viewBox', [this.vb.x, this.vb.y, this.vb.w, this.vb.h].join(' '));
@@ -151,14 +204,18 @@
   };
   PanZoom.prototype.zoomAt = function (px, py, f) {
     const b = this.base; if (!b) return;
+    this.finish();
     const w = Math.min(Math.max(this.vb.w * f, b.w * 0.03), b.w * 3), g = w / this.vb.w;
     this.vb.x = px - (px - this.vb.x) * g; this.vb.y = py - (py - this.vb.y) * g;
     this.vb.h *= g; this.vb.w = w; this.apply();
   };
   PanZoom.prototype.zoomCenter = function (f) {
-    const ins = insets(), r = this.svg.getBoundingClientRect();
+    this.finish();
+    const ins = insets(), r = this.svg.getBoundingClientRect(), b = this.base;
+    if (!b) return;
     const p = this.toUser(r.left + ins.l + (r.width - ins.l - ins.r) / 2, r.top + ins.t + (r.height - ins.t - ins.b) / 2);
-    this.zoomAt(p.x, p.y, f);
+    const w = Math.min(Math.max(this.vb.w * f, b.w * 0.03), b.w * 3), g = w / this.vb.w;
+    this.go({ x: p.x - (p.x - this.vb.x) * g, y: p.y - (p.y - this.vb.y) * g, w: w, h: this.vb.h * g }, true, 220);
   };
   // the viewBox that shows box in the part of the screen not covered by panels
   PanZoom.prototype.target = function (box, padFrac) {
@@ -175,18 +232,24 @@
     this.fitBox = box;
     this.go(this.target(box, padFrac), animate);
   };
-  PanZoom.prototype.go = function (target, animate) {
-    cancelAnimationFrame(this.anim);
-    if (!animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // glide to a viewBox: a CSS transition of the transform, then the real viewBox once at the end
+  PanZoom.prototype.go = function (target, animate, ms) {
+    this.finish();
+    const r = this.svg.getBoundingClientRect();
+    const hidden = !r.width || getComputedStyle(this.svg.parentElement).visibility === 'hidden';
+    if (!animate || hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.vb = target; this.apply(); return;
     }
-    const from = Object.assign({}, this.vb), t0 = performance.now(), self = this;
-    (function tick(now) {
-      const t = Math.min(1, (now - t0) / 480), e = 1 - Math.pow(1 - t, 3);
-      ['x', 'y', 'w', 'h'].forEach((k) => { self.vb[k] = from[k] + (target[k] - from[k]) * e; });
-      self.apply();
-      if (t < 1) self.anim = requestAnimationFrame(tick);
-    })(t0);
+    const f = this.frame(r), s = r.width / (target.w * f.k);
+    const tx = -s * (target.x - f.ox) * f.k, ty = -s * (target.y - f.oy) * f.k;
+    const svg = this.svg, self = this;
+    ms = ms || 420;
+    svg.style.transition = 'none';
+    svg.style.transform = 'translate(0px,0px) scale(1)';
+    void svg.getBoundingClientRect();                     // start the transition from here
+    svg.style.transition = 'transform ' + ms + 'ms cubic-bezier(.2,.8,.2,1)';
+    svg.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    this.pending = { target: target, timer: setTimeout(() => self.finish(), ms + 20) };
   };
   PanZoom.prototype.reset = function () { if (this.fitBox) this.fit(this.fitBox, true); };
 
@@ -198,7 +261,7 @@
   function planImage(si) {
     const id = D.sheets[si][0], size = window.PLANS && window.PLANS[id];
     if (!size) return '';
-    return '<image class="plan-img" href="plans/' + id + '.jpg" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '" preserveAspectRatio="none"/>';
+    return '<image class="plan-img" href="plans/' + id + '.webp" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '" preserveAspectRatio="none"/>';
   }
 
   // ---------- views: the campus or one floor of a building ----------
@@ -555,11 +618,14 @@
   // while walking, slide the map so the walker stays in the open part of the screen
   function follow(pz, x, y) {
     if (performance.now() - (pz.userMoved || 0) < 2500) return;   // the user is looking around, leave the map alone
-    const r = pz.svg.getBoundingClientRect(), ins = insets(), k = pz.scale();
-    const availW = r.width - ins.l - ins.r, availH = r.height - ins.t - ins.b;
-    const tx = x - (ins.l + availW / 2) / k, ty = y - (ins.t + availH / 2) / k;
-    pz.vb.x += (tx - pz.vb.x) * 0.08; pz.vb.y += (ty - pz.vb.y) * 0.08;
-    pz.apply();
+    if (pz.g || pz.pending) return;                                 // a finger or a glide is already moving it
+    const f = pz.frame(), ins = insets();
+    const availW = f.r.width - ins.l - ins.r, availH = f.r.height - ins.t - ins.b;
+    // where the walker is on screen, inside the open part of the map
+    const sx = (x - f.ox) * f.k - ins.l, sy = (y - f.oy) * f.k - ins.t;
+    if (sx > availW * 0.25 && sx < availW * 0.75 && sy > availH * 0.25 && sy < availH * 0.75) return;
+    // near the edge: glide so the walker is in the middle again (one smooth move, not a redraw every frame)
+    pz.go({ x: x - (ins.l + availW / 2) / f.k, y: y - (ins.t + availH / 2) / f.k, w: pz.vb.w, h: pz.vb.h }, true, 650);
   }
 
   let curStep = -1;
@@ -770,17 +836,29 @@
       if (!desktop() && kind === 'q') setSheetSize('peek');
     });
     self.refresh = () => { if (document.activeElement === input && self.value < 0) open(); };
-    input.addEventListener('blur', () => setTimeout(close, 150));
+    input.addEventListener('blur', () => setTimeout(() => {
+      if (inList) { inList = false; return; }                     // the finger is on the list: leave it open until a tap outside
+      close();
+    }, 150));
+    document.addEventListener('pointerdown', (e) => { if (!list.hidden && !list.contains(e.target) && e.target !== input) { inList = false; close(); } });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) open(); mark(Math.min(items.length - 1, active + 1)); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); mark(Math.max(0, active - 1)); }
       else if (e.key === 'Enter') { e.preventDefault(); if (!list.hidden && items.length) self.set(items[active >= 0 ? active : 0]); }
       else if (e.key === 'Escape') close();
     });
+    // a result is picked on a real tap (click), so a finger can scroll the list without picking anything
+    let inList = false;
     list.addEventListener('pointerdown', (e) => {
-      const li = e.target.closest('li'); if (!li) return;
-      e.preventDefault(); self.set(items[+li.dataset.k]); input.blur();
+      inList = true;
+      if (e.pointerType === 'mouse') e.preventDefault();           // keep the text field focused on computers
     });
+    list.addEventListener('click', (e) => {
+      inList = false;
+      const li = e.target.closest('li'); if (!li) return;
+      self.set(items[+li.dataset.k]); input.blur();
+    });
+    list.addEventListener('scroll', () => { inList = true; }, { passive: true });
     clear.addEventListener('click', () => { self.clear(); if (kind !== 'q') S[kind] = -1; input.focus(); if (onSet && kind === 'q') onSet(-1, false); });
     return self;
   }
@@ -1109,6 +1187,19 @@
     const m = location.hash.match(/to=([^&]+)/), v = m ? E.findKey(decodeURIComponent(m[1])) : -1;
     if (v >= 0) selectPlace(v);
   }
+
+  // the phone's back button: close one thing at a time, like a map app; false means "nothing left, leave the app"
+  window.appBack = function () {
+    const open = document.querySelector('.suggest:not([hidden])');
+    if (open) { open.hidden = true; return true; }
+    if (S.nav) { stopNav(); return true; }
+    if (!$('secPlace').hidden && S.sel >= 0) { closePlace(); return true; }
+    if (S.dir) { exitDirections(); return true; }
+    if (filtering()) { clearFilters(); return true; }
+    if (S.view === 'floor') { setView('campus'); return true; }
+    if (!desktop() && sheetState !== 'peek') { setSheetSize('peek'); return true; }
+    return false;
+  };
 
   // handy for testing from the console
   window.__app = { S, E, findRoute, fromField, toField, qField, renderAt, setMode, selectPlace, enterDirections, startNav, stopNav, setSheetSize };

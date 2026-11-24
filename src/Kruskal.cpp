@@ -10,8 +10,8 @@
  * We stop when we have V - 1 edges. If we cannot reach V - 1, the graph is
  * not connected, so there is no MST.
  */
- */
-
+ 
+#include "Graph.h"
 #include "Kruskal.h"
 #include "DisjointSet.h"
 #include <climits>

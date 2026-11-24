@@ -166,7 +166,7 @@
   function planImage(si) {
     const id = D.sheets[si][0], size = window.PLANS && window.PLANS[id];
     if (!size) return '';
-    return '<image class="plan-img" href="plans/' + id + '.png" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '" preserveAspectRatio="none"/>';
+    return '<image class="plan-img" href="plans/' + id + '.jpg" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '" preserveAspectRatio="none"/>';
   }
 
   // ---------- campus map ----------
@@ -197,6 +197,7 @@
       const gate = typeName(v) === 'ENTRANCE';
       if (gate) {
         h += '<rect class="gate" data-v="' + v + '" x="' + (D.x[v] - 6 * u) + '" y="' + (D.y[v] - 6 * u) + '" width="' + 12 * u + '" height="' + 12 * u + '" transform="rotate(45 ' + D.x[v] + ' ' + D.y[v] + ')"/>';
+        h += '<text class="gate-name" x="' + (D.x[v] + 11 * u) + '" y="' + (D.y[v] + 4 * u) + '" style="font-size:' + 12 * u + 'px">' + esc(E.name(v).replace(/ Entrance$/, '')) + '</text>';
       } else {
         h += '<circle class="v other" data-v="' + v + '" cx="' + D.x[v] + '" cy="' + D.y[v] + '" r="' + 3.2 * u + '"/>';
       }
@@ -284,7 +285,7 @@
     });
     const meters = E.meters(cum[cum.length - 1]);
     return { rt, cum, total: cum[cum.length - 1] || 1, segs, steps: E.steps(rt),
-      dur: Math.min(16000, Math.max(5200, 4200 + meters * 11)), meters };
+      dur: Math.min(40000, Math.max(11000, 8000 + meters * 28)), meters };
   }
 
   function routeBox(si) {
@@ -484,10 +485,14 @@
     b.setAttribute('aria-label', S.playing ? 'Pause' : done ? 'Replay the walk' : 'Play the walk');
   }
 
+  const OUTDOOR_SPEEDUP = 1.9;
   function frame(now) {
     if (!S.playing) return;
     const dt = now - S.last; S.last = now;
-    renderAt(S.p + dt / S.R.dur);
+    // outside the buildings the walker moves faster than inside
+    const ei = edgeAt(S.p * S.R.total), pe = S.R.rt.path;
+    const outside = pe[ei] !== undefined && pe[ei + 1] !== undefined && E.isOutdoors(pe[ei]) && E.isOutdoors(pe[ei + 1]);
+    renderAt(S.p + dt * (outside ? OUTDOOR_SPEEDUP : 1) / S.R.dur);
     if (S.p >= 1) { S.playing = false; updatePlayBtn(); renderAt(1); return; }
     requestAnimationFrame(frame);
   }

@@ -1,0 +1,1 @@
+FromID ToID Weight EdgeType Accessible

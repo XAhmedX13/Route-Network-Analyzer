@@ -362,3 +362,6 @@ ol, ul { list-style: none; }
 
 .pop .about { font-size: 12.5px; line-height: 1.4; color: var(--ink-soft); margin: 0 0 10px; }
 .hint { line-height: 1.35; }
+
+.gate-name { fill: #0F2A43; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; pointer-events: none; }
+:root[data-theme="dark"] .gate-name { fill: #fff; stroke: #0F2A43; }

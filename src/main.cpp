@@ -14,7 +14,7 @@
 using namespace std;
 
 // Room for every location in the data file. Increase it if the dataset grows.
-const int GRAPH_CAPACITY = 10000;
+const int GRAPH_CAPACITY = 20000;
 
 int main(int argc, char* argv[]) {
     string locationFile = "data/locations.txt";

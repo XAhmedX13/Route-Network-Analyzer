@@ -189,8 +189,111 @@
     return 'walk';
   }
 
+  // ---------- turn by turn: where a walk bends left or right ----------
+  var sheetSize = null, sheetPlaces = null;
+  var LANDMARK = { ROOM: 1, CLASSROOM: 1, RESTROOM: 1, ELEVATOR: 1, STAIRS: 1, CAFE: 1, RESTAURANT: 1, VENDOR: 1, ENTRANCE: 1, OUTDOOR: 1, BUILDING: 1 };
+  function prepareSheets() {
+    sheetSize = []; sheetPlaces = [];
+    var box = [];
+    for (var v = 0; v < N; v++) {
+      var s = D.sheet[v];
+      if (!box[s]) { box[s] = [1e9, 1e9, -1e9, -1e9]; sheetPlaces[s] = []; }
+      var b = box[s];
+      if (D.x[v] < b[0]) b[0] = D.x[v]; if (D.y[v] < b[1]) b[1] = D.y[v];
+      if (D.x[v] > b[2]) b[2] = D.x[v]; if (D.y[v] > b[3]) b[3] = D.y[v];
+      if (LANDMARK[typeName(v)] && D.keys[v].indexOf('_O_D_') < 0) sheetPlaces[s].push(v);
+    }
+    box.forEach(function (b, s) { sheetSize[s] = Math.max(b[2] - b[0], b[3] - b[1], 100); });
+  }
+  // the named place closest to a turn, to say "turn left near Lab 1214"
+  function landmarkNear(v, avoid) {
+    var s = D.sheet[v], best = -1, bd = sheetSize[s] * 0.025;
+    sheetPlaces[s].forEach(function (p) {
+      if (avoid.indexOf(p) >= 0) return;
+      var d = Math.hypot(D.x[p] - D.x[v], D.y[p] - D.y[v]);
+      if (d < bd) { bd = d; best = p; }
+    });
+    return best;
+  }
+  // keep only the corners of a polyline (Ramer Douglas Peucker), returns indices into pts
+  function corners(pts, eps) {
+    var keep = [0, pts.length - 1];
+    (function split(a, b) {
+      var far = -1, fd = eps;
+      var dx = pts[b].x - pts[a].x, dy = pts[b].y - pts[a].y, L = Math.hypot(dx, dy) || 1;
+      for (var k = a + 1; k < b; k++) {
+        var d = Math.abs(dy * (pts[k].x - pts[a].x) - dx * (pts[k].y - pts[a].y)) / L;
+        if (d > fd) { fd = d; far = k; }
+      }
+      if (far > 0) { keep.push(far); split(a, far); split(far, b); }
+    })(0, pts.length - 1);
+    return keep.sort(function (a, b) { return a - b; });
+  }
+  // the turns along path[from..to]: [{ k: path index, angle: degrees, + is right }]
+  // (on these plans y grows downwards, so a clockwise bend is a turn to the right)
+  function turnsAlong(path, cu, from, to) {
+    if (!sheetSize) prepareSheets();
+    var pts = [];
+    for (var k = from; k <= to; k++) pts.push({ x: D.x[path[k]], y: D.y[path[k]] });
+    if (pts.length < 3) return [];
+    var eps = Math.max(3, sheetSize[D.sheet[path[from]]] * 0.006);
+    var keep = corners(pts, eps), raw = [];
+    for (var j = 1; j < keep.length - 1; j++) {
+      var a = pts[keep[j - 1]], b = pts[keep[j]], c = pts[keep[j + 1]];
+      var ax = b.x - a.x, ay = b.y - a.y, bx = c.x - b.x, by = c.y - b.y;
+      if (Math.hypot(ax, ay) < eps || Math.hypot(bx, by) < eps) continue;     // a small jog, not a corner
+      var ang = Math.atan2(ax * by - ay * bx, ax * bx + ay * by) * 180 / Math.PI;
+      raw.push({ k: from + keep[j], angle: ang });
+    }
+    // two bends close together are one corner (for example two half turns around a pillar)
+    var out = [];
+    raw.forEach(function (t) {
+      var last = out[out.length - 1];
+      var gap = last ? meters(cu[t.k] - cu[last.k]) : 99;
+      // close bends are one corner, and a right then a left a few metres apart is a side step, not two turns
+      if (last && (gap < 2.5 || (gap < 6 && (last.angle > 0) !== (t.angle > 0)))) { last.angle += t.angle; return; }
+      out.push({ k: t.k, angle: t.angle });
+    });
+    return out.filter(function (t) {
+      while (t.angle > 180) t.angle -= 360;
+      while (t.angle < -180) t.angle += 360;
+      return Math.abs(t.angle) >= 40;      // gentler bends than this are just the corridor
+    });
+  }
+  function turnWords(angle) {
+    var side = angle > 0 ? 'right' : 'left', a = Math.abs(angle);
+    if (a > 150) return { kind: 'around', side: side, text: 'Turn around' };
+    if (a < 60) return { kind: 'slight-' + side, side: side, text: 'Keep ' + side };
+    return { kind: side, side: side, text: 'Turn ' + side };
+  }
+  // one walking part of the route as turn by turn steps
+  function walkSteps(path, cu, from, to, opening, target, detail, destination) {
+    var origin = path[0];
+    var turns = turnsAlong(path, cu, from, to);
+    var m = function (a, b) { return Math.max(1, Math.round(meters(cu[b] - cu[a]))); };
+    if (!turns.length) return [{ kind: 'walk', from: from, to: to, text: opening(m(from, to)) + (target ? ' to ' + target : ''), detail: detail, meters: m(from, to) }];
+    var out = [], start = from;
+    if (meters(cu[turns[0].k] - cu[from]) >= 5) {
+      out.push({ kind: 'walk', from: from, to: turns[0].k, text: opening(m(from, turns[0].k)), detail: detail, meters: m(from, turns[0].k) });
+    }
+    turns.forEach(function (t, i) {
+      var end = i + 1 < turns.length ? turns[i + 1].k : to, last = i === turns.length - 1;
+      var w = turnWords(t.angle), lm = landmarkNear(path[t.k], [origin, destination]), rest = meters(cu[end] - cu[t.k]);
+      var text;
+      if (last && target && rest < 6) {
+        text = target.charAt(0).toUpperCase() + target.slice(1) + (/^the stairs$/.test(target) ? ' are' : ' is') + ' on your ' + w.side;
+      } else {
+        text = w.text + (lm >= 0 ? ' near ' + name(lm) : '') + (rest >= 2 ? ', then walk ' + m(t.k, end) + ' m' : '') + (last && target ? ' to ' + target : '');
+      }
+      out.push({ kind: w.kind, from: i === 0 && out.length === 0 ? start : t.k, to: end, text: text, detail: detail, meters: m(t.k, end) });
+    });
+    return out;
+  }
+
   function steps(rt) {
     var out = [], i;
+    var cu = [0];
+    for (i = 0; i < rt.edges.length; i++) cu.push(cu[i] + rt.edges[i].w);
     if (!rt.found) return out;
     out.push({ kind: 'start', from: 0, to: 0, text: 'Start at ' + name(rt.path[0]), detail: place(rt.path[0]), meters: 0 });
     var groups = [];
@@ -216,11 +319,12 @@
             : next.kind === 'door' ? 'the exit' : null;
         }
         if (gi === groups.length - 1) target = name(endV);
-        text = 'Walk ' + Math.max(m, 1) + ' m' + (target ? ' to ' + target : ' along the corridor');
-        detail = place(first.a);
+        out.push.apply(out, walkSteps(rt.path, cu, g.from, g.to, function (mm) { return 'Walk ' + mm + ' m'; }, target, place(first.a), endV));
+        return;
       } else if (g.kind === 'outdoor') {
-        text = 'Walk ' + Math.max(m, 1) + ' m across campus';
-        detail = 'Outdoors';
+        var outTarget = isWaypoint(endV) || D.keys[endV].indexOf('_O_D_') >= 0 ? null : name(endV);
+        out.push.apply(out, walkSteps(rt.path, cu, g.from, g.to, function (mm) { return 'Walk ' + mm + ' m across campus'; }, outTarget, 'Outdoors', endV));
+        return;
       } else if (g.kind === 'door') {
         var leaving = !isOutdoors(first.a);
         var b = leaving ? building(first.a) : building(first.b);

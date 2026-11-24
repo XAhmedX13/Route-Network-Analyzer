@@ -37,6 +37,16 @@
   <symbol id="i-turn" viewBox="0 0 24 24"><path d="M12 2.5l9.5 9.5-9.5 9.5L2.5 12z" fill="currentColor"/><path d="M9 15v-3.5h6M12.5 8.5l3 3-3 3" style="stroke:var(--turn-arrow,#fff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/></symbol>
   <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1.5M13.5 10H15M9 14h1.5M13.5 14H15M10.5 21v-3h3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M6 5v14M19 5L9 12l10 7z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M18 5v14M5 5l10 7-10 7z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M16 21v-8.5a4 4 0 0 0-4-4H5M9.5 4L5 8.5 9.5 13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M8 21v-8.5a4 4 0 0 1 4-4h7M14.5 4L19 8.5 14.5 13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-slight-left" viewBox="0 0 24 24"><path d="M15 21v-7L7.5 6.5M7 12.5V6h6.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-slight-right" viewBox="0 0 24 24"><path d="M9 21v-7l7.5-7.5M17 12.5V6h-6.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-around" viewBox="0 0 24 24"><path d="M8 21V9a4.5 4.5 0 0 1 9 0v4M13.5 10l3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
 </svg>
 
@@ -69,7 +79,7 @@
 <button type="button" class="dir-fab" id="dirFab" aria-label="Directions"><svg><use href="#i-turn"/></svg><span>Directions</span></button>
 
 <!-- while walking: the current instruction -->
-<div class="nav-banner" id="navBanner" hidden>
+<div class="nav-banner" id="navBanner" role="status" aria-live="polite" hidden>
   <span class="nb-icon" id="nbIcon"></span>
   <div class="nb-text"><b id="nbText"></b><span id="nbWhere"></span></div>
   <span class="nb-m" id="nbM"></span>
@@ -81,6 +91,11 @@
     <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
   </div>
   <button class="nav-exit" id="navExit" type="button">Exit</button>
+  <div class="step-ctl" role="group" aria-label="Step by step">
+    <button type="button" class="ctl" id="stepPrev" aria-label="Previous step"><svg><use href="#i-prev"/></svg><span>Back</span></button>
+    <button type="button" class="ctl" id="stepSay" aria-label="Say this step again"><svg><use href="#i-sound"/></svg><span>Repeat</span></button>
+    <button type="button" class="ctl" id="stepNext" aria-label="Next step"><svg><use href="#i-next"/></svg><span>Next</span></button>
+  </div>
 </div>
 
 <!-- search, directions, the sheet -->
@@ -94,6 +109,8 @@
         <button type="button" class="clear" id="qClear" aria-label="Clear search" hidden><svg><use href="#i-close"/></svg></button>
         <ul class="suggest" id="qList" role="listbox" hidden></ul>
       </div>
+      <button class="round-btn mic" id="micBtn" type="button" aria-label="Search by voice" title="Search by voice"><svg><use href="#i-mic"/></svg></button>
+      <button class="round-btn" id="voiceBtn" type="button" aria-pressed="false" aria-label="Voice guidance off. Turn on spoken directions" title="Voice guidance"><svg><use href="#i-mute"/></svg></button>
       <button class="round-btn" id="themeBtn" type="button" aria-label="Switch between light and dark" title="Light or dark"><svg><use href="#i-moon"/></svg></button>
     </div>
 
@@ -104,6 +121,7 @@
           <button type="button" class="mode" id="modeFast" role="tab" aria-pressed="true"><svg><use href="#i-walk"/></svg>Fastest</button>
           <button type="button" class="mode free" id="modeFree" role="tab" aria-pressed="false"><svg><use href="#i-ramp"/></svg>Step-free</button>
         </div>
+        <button class="round-btn mic" id="micBtn2" type="button" aria-label="Say a place by voice" title="Say a place"><svg><use href="#i-mic"/></svg></button>
       </div>
       <div class="dir-fields">
         <div class="dots" aria-hidden="true"><svg class="d-start"><use href="#i-start"/></svg><i></i><i></i><i></i><svg class="d-end"><use href="#i-pin"/></svg></div>
@@ -179,6 +197,7 @@
           <div><div class="big" id="rTime"></div><p class="sub" id="rSub"></p></div>
           <button type="button" class="start-btn" id="startBtn"><svg><use href="#i-play"/></svg>Start</button>
         </div>
+        <button type="button" class="text-btn read-all" id="readAll"><svg><use href="#i-sound"/></svg><span>Read all directions aloud</span></button>
         <div class="compare" id="compare"></div>
         <ol class="steps" id="steps"></ol>
         <div class="route-foot">

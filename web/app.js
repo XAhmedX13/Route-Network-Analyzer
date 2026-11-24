@@ -318,7 +318,7 @@
   // keep the building tiles about the same size on screen while zooming
   pzC.onApply = function () {
     if (!pzC.base) return;
-    const s = Math.min(1, (pzC.vb.w / pzC.base.w) * 1.15);   // same size on screen at every zoom
+    const s = Math.min(1, Math.min(pzC.vb.w / pzC.base.w, pzC.vb.h / pzC.base.h) * 1.15);   // same size on screen at every zoom and screen shape
     document.querySelectorAll('.bld').forEach((g) => {
       const a = D.anchors[buildingCodes[+g.dataset.b]];
       g.setAttribute('transform', 'translate(' + a[0] + ' ' + a[1] + ') scale(' + s + ') translate(' + -a[0] + ' ' + -a[1] + ')');
@@ -427,7 +427,7 @@
     });
     const meters = E.meters(cum[cum.length - 1]);
     return { rt, cum, total: cum[cum.length - 1] || 1, segs, steps: E.steps(rt),
-      dur: Math.min(40000, Math.max(11000, 8000 + meters * 28)), meters };
+      dur: Math.min(120000, Math.max(20000, 14000 + meters * 55)), meters };   // slow enough to follow on a phone
   }
 
   function routeBox(si) {
@@ -559,6 +559,7 @@
     renderFloorHead();
     showSection('secRoute', 'half');
     requestAnimationFrame(() => overview(true));
+    speak(routeSpeech());
     renderAt(0, true);
     updatePlayBtn();
     writeHash();
@@ -589,7 +590,8 @@
         : tile('free', 'Step-free', 'i-ramp', free, free.found ? 'Elevators and ramps, ' + (delta >= 0 ? '+' : '') + delta + ' m' : 'No step-free way', 'free'));
   }
 
-  const STEP_ICON = { start: 'i-start', end: 'i-end', walk: 'i-walk', stairs: 'i-stairs', elevator: 'i-elevator', door: 'i-door', outdoor: 'i-outdoor' };
+  const STEP_ICON = { start: 'i-start', end: 'i-end', walk: 'i-walk', stairs: 'i-stairs', elevator: 'i-elevator', door: 'i-door', outdoor: 'i-outdoor',
+    left: 'i-left', right: 'i-right', 'slight-left': 'i-slight-left', 'slight-right': 'i-slight-right', around: 'i-around' };
   function renderSteps() {
     $('steps').innerHTML = S.R.steps.map((s, i) =>
       '<li><button type="button" class="step k-' + s.kind + '" data-step="' + i + '"><span class="tile">' + icon(STEP_ICON[s.kind]) + '</span>' +
@@ -647,6 +649,7 @@
     else if (f < 0.5) { sheetNow = sa; x = D.x[a]; y = D.y[a]; }
     else { sheetNow = sb; x = D.x[b]; y = D.y[b]; }
     const outdoors = sheetNow === campusSheet;
+    S.walk = { outdoors, x: outdoors ? cx : x, y: outdoors ? cy : y };
     if (!keepView) {
       if (outdoors) setView('campus');
       else {
@@ -674,6 +677,11 @@
       $('nbIcon').innerHTML = icon(STEP_ICON[s.kind]);
       $('nbText').textContent = s.kind === 'end' ? 'You have arrived' : s.text;
       $('nbWhere').textContent = s.detail;
+      if (S.nav && S.playing) {
+        speak(stepSpeech(cur)); buzz(s.kind === 'end' ? [90, 60, 90] : 60);
+        // stop at each new instruction long enough to read it (longer when it is also spoken)
+        S.holdUntil = performance.now() + Math.max(2600, (voice.on ? 75 : 45) * (s.text.length + s.detail.length));
+      }
     }
     $('scrub').value = Math.round(S.p * 1000);
     const left = Math.max(0, Math.round(R.meters - E.meters(d)));
@@ -693,6 +701,7 @@
   function frame(now) {
     if (!S.playing) return;
     const dt = now - S.last; S.last = now;
+    if (now < (S.holdUntil || 0)) { requestAnimationFrame(frame); return; }   // reading time at a new step
     // outside the buildings the walker moves faster than inside
     const ei = edgeAt(S.p * S.R.total), pe = S.R.rt.path;
     const outside = pe[ei] !== undefined && pe[ei + 1] !== undefined && E.isOutdoors(pe[ei]) && E.isOutdoors(pe[ei + 1]);
@@ -720,7 +729,9 @@
     const p = S.view === 'campus' ? pointOf(v) : { x: D.x[v], y: D.y[v] };
     const box = S.view === 'campus' ? campusBox : sheetBox[S.sheet], span = Math.max(box.x1 - box.x0, box.y1 - box.y0) * (S.view === 'campus' ? 0.16 : 0.2);
     pz.fit({ x0: p.x - span, x1: p.x + span, y0: p.y - span, y1: p.y + span }, true, 0);
-    setTimeout(play, 350);
+    // with voice guidance the student goes step by step with Next; otherwise the walk plays by itself
+    if (voice.on) { S.playing = false; updatePlayBtn(); speak(stepSpeech(curStep >= 0 ? curStep : 0)); buzz(60); }
+    else setTimeout(play, 350);
   }
   function stopNav() {
     S.playing = false; S.nav = false; body.classList.remove('nav');
@@ -876,6 +887,210 @@
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.toggle('on', !!msg);
     clearTimeout(toastTimer); if (msg) toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+    if (msg) speak(msg);
+  }
+
+  // ---------- voice: spoken guidance and voice search, for students who cannot see the screen well ----------
+  // In the Android app the page talks through window.AndroidVoice (Android's own text to speech and speech
+  // recognizer, see MainActivity.java). In a browser it uses the Web Speech API when the browser has it.
+  const voice = { on: false };
+  try { voice.on = localStorage.getItem('voice') === 'on'; } catch (e) { /* ignore */ }
+
+  // words a speech engine reads better: "116 m" is "116 meters", room 2071 is "2 0 7 1" not "two thousand..."
+  function speechText(str) {
+    return String(str)
+      .replace(/(\d+) m\b/g, '$1 meters')
+      .replace(/(\d+) min\b/g, '$1 minutes')
+      .replace(/\b([A-Z]{0,2})(\d{3,4})([A-Z]?)\b(?! (meters|minutes))/g, (m, a, d, b) => (a ? a + ' ' : '') + d.split('').join(' ') + (b ? ' ' + b : ''))
+      .replace(/_/g, ' ');
+  }
+  function speak(text, force) {
+    if ((!voice.on && !force) || !text) return;
+    const t = speechText(text);
+    if (window.AndroidVoice) { window.AndroidVoice.speak(t, true); return; }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = 'en-US'; u.rate = 1;
+      window.speechSynthesis.speak(u);
+    }
+  }
+  function buzz(pattern) { try { if (voice.on && navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* ignore */ } }
+  function setVoice(on, quiet) {
+    voice.on = on;
+    try { localStorage.setItem('voice', on ? 'on' : 'off'); } catch (e) { /* ignore */ }
+    const b = $('voiceBtn');
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', on ? 'Voice guidance on. Turn off spoken directions' : 'Voice guidance off. Turn on spoken directions');
+    b.innerHTML = icon(on ? 'i-sound' : 'i-mute');
+    $('navBanner').setAttribute('aria-live', on ? 'off' : 'polite');    // our own voice already reads the banner
+    if (on && !quiet) speak('Voice guidance is on. Tap the microphone and say a room, for example, take me to office 2071.');
+    else if (window.AndroidVoice) window.AndroidVoice.stop();
+    else if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  function placeSpeech(v) { return E.name(v) + '. ' + E.describe(v); }
+  function routeSpeech() {
+    const R = S.R, rt = R.rt, n = R.steps.length;
+    return 'Route to ' + E.name(S.to) + ' from ' + E.name(S.from) + '. ' + E.formatTime(rt.seconds) + ', ' + Math.round(R.meters) + ' m' +
+      (usesStairs(rt) ? ', using stairs' : ', with no stairs') + '. ' + n + ' steps. Tap Start to hear them one by one, or Read all directions.';
+  }
+  function stepSpeech(k) {
+    const R = S.R, s = R.steps[k], n = R.steps.length;
+    if (s.kind === 'end') return 'Step ' + (k + 1) + ' of ' + n + '. You have arrived at ' + E.name(S.to) + '.';
+    return 'Step ' + (k + 1) + ' of ' + n + '. ' + s.text + '. ' + s.detail + '.';
+  }
+
+  // voice search: turn what was said into places
+  const NUM_WORDS = { zero: 0, oh: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+  function cleanSpoken(t) {
+    t = ' ' + t.toLowerCase().replace(/[.,!?]/g, ' ') + ' ';
+    t = t.replace(/\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => String(NUM_WORDS[w]));
+    t = t.replace(/(\d)\s+(?=\d)/g, '$1');                      // "2 0 7 1" and "20 71" are 2071
+    t = t.replace(/\b(room|the|a|an|number|please|of)\b/g, ' ');
+    return t.replace(/\s+/g, ' ').trim();
+  }
+  // everyday words for the names used in the data
+  const SAY_AS = { gate: 'entrance', door: 'entrance', exit: 'entrance', bathroom: 'restroom', toilet: 'restroom', toilets: 'restroom',
+    washroom: 'restroom', wc: 'restroom', lift: 'elevator', lifts: 'elevator', elevators: 'elevator', stairway: 'stairs',
+    staircase: 'stairs', cafeteria: 'cafe', canteen: 'cafe', coffee: 'cafe', professor: 'faculty', doctor: 'faculty', classroom: 'class' };
+  // building names people say, to the building code in the data
+  const SAY_BUILDING = [
+    [/\b(library|lib)\b/, 'LIB'], [/\b(sse|science|sciences|engineering)\b/, 'SSE'], [/\b(huss|alwaleed|humanities)\b/, 'HUSS'],
+    [/\b(campus center|cc)\b/, 'CC'], [/\b(sports|gym|sport)\b/, 'SPORTS'], [/\b(residences?|dorms?|resid)\b/, 'RESID'],
+    [/\b(core|core academic)\b/, 'CORE'], [/\b(admin|administration)\b/, 'ADMIN'], [/\b(arts|pva|center for the arts)\b/, 'PVA'],
+    [/\b(jameel)\b/, 'JAMEEL'], [/\b(physical plant|plant)\b/, 'PP']
+  ];
+  // the main door of a building: its first entrance on the Plaza floor
+  function buildingDoor(code) {
+    let best = -1;
+    for (let v = 0; v < N; v++) {
+      if (E.building(v)[0] !== code) continue;
+      const floor = D.sheets[D.sheet[v]][2];
+      if (typeName(v) === 'ENTRANCE' && floor === 0) return v;
+      if (best < 0 && floor === 0 && !E.isWaypoint(v)) best = v;
+    }
+    return best;
+  }
+  function spokenBuilding(t) {
+    const bare = t.replace(/\b(building|hall|the|complex|centre|block|main)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    for (const [re, code] of SAY_BUILDING) {
+      const m = bare.match(re);
+      if (m && m[0].length >= bare.length - 1) return buildingDoor(code);     // the whole phrase is a building name
+    }
+    return -1;
+  }
+  // "bathroom", "the nearest lift", "food": the nearest place of that kind from where the student is
+  const SAY_KIND = [[/\b(restroom|restrooms|bathroom|toilets?|washroom|wc)\b/, 'restroom'], [/\b(elevators?|lifts?)\b/, 'elevator'],
+    [/\b(food|cafe|cafeteria|canteen|coffee|eat)\b/, 'food'], [/\b(exit|way out|entrance)\b/, 'entrance']];
+  function spokenKind(t) {
+    const bare = cleanSpoken(t).replace(/\b(nearest|closest|near|me|find|where|is|are|to|go|take|i|can|get|some|any)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    for (const [re, kind] of SAY_KIND) { const m = bare.match(re); if (m && m[0].length >= bare.length - 1) return kind; }
+    return '';
+  }
+  function findSpoken(t) {
+    t = cleanSpoken(t);
+    if (!t) return -1;
+    const b = spokenBuilding(t);
+    if (b >= 0) return b;
+    const words = t.split(' ');
+    const tries = [t, words.map((w) => SAY_AS[w] || w).join(' ')];
+    // then the same with one word left out at a time, for extra words like "pepsi gate" or "sse building"
+    if (words.length > 1) words.forEach((_, i) => {
+      const rest = words.filter((__, j) => j !== i);
+      tries.push(rest.join(' '), rest.map((w) => SAY_AS[w] || w).join(' '));
+    });
+    const codes = words.filter((w) => /\d/.test(w)).join(' ');
+    if (codes) tries.push(codes);
+    for (const q of tries) {
+      if (!q) continue;
+      const hit = E.search(q, 1)[0];
+      if (hit !== undefined) return hit;
+    }
+    return -1;
+  }
+  function onHeard(list) {
+    $('micBtn').classList.remove('listening'); $('micBtn2').classList.remove('listening');
+    // a kind of place: go to the nearest one from where we are, or list them if we do not know where that is
+    const kind = spokenKind(list[0] || '');
+    if (kind) {
+      const here = S.sel >= 0 ? S.sel : S.from;
+      if (here >= 0) {
+        const near = E.nearest(here, NEAR[kind], S.mode === 'free', 1)[0];
+        if (near) { enterDirections({ from: here, to: near.v }); return; }
+      }
+      FILTER.kind = kind === 'entrance' ? 'entrance' : kind; filtersChanged();
+      speak('Here are the ' + KIND_LABEL[FILTER.kind].toLowerCase() + '. Say where you are, and then ask again for the nearest one.');
+      return;
+    }
+    for (const said of list) {
+      const t = said.toLowerCase().trim();
+      let m = t.match(/^(?:directions |go |walk |take me )?from (.+?) to (.+)$/);
+      if (m) {
+        const a = findSpoken(m[1]), b = findSpoken(m[2]);
+        if (a >= 0 && b >= 0) { enterDirections({ from: a, to: b }); return; }
+        continue;
+      }
+      m = t.match(/^(?:take me to|go to|navigate to|walk to|directions to|how do i get to|how to get to|get me to) (.+)$/);
+      if (m) {
+        const b = findSpoken(m[1]);
+        if (b < 0) continue;
+        enterDirections({ to: b });
+        if (S.from < 0) speak('Going to ' + E.name(b) + '. Where are you now? Tap the microphone and say your start.');
+        return;
+      }
+      const v = findSpoken(t.replace(/^(?:where is|find|search for|show me|show) /, ''));
+      if (v < 0) continue;
+      if (S.dir) {
+        if (S.from < 0) fromField.set(v); else if (S.to < 0) toField.set(v); else pickFromList(v);
+        if (S.from >= 0 && S.to < 0) speak('Starting at ' + E.name(v) + '. Now tap the microphone and say where you are going.');
+      } else {
+        selectPlace(v);
+      }
+      return;
+    }
+    toast('I could not find "' + (list[0] || '') + '". Try saying the room number, like office 2071.');
+  }
+  window.onVoiceResult = (list) => onHeard(Array.isArray(list) ? list : [String(list)]);
+  window.onVoiceError = (why) => {
+    $('micBtn').classList.remove('listening'); $('micBtn2').classList.remove('listening');
+    toast(why === 'unavailable' ? 'Voice search is not available on this phone.' : 'I did not hear anything. Tap the microphone and try again.');
+  };
+  function listen(btn) {
+    if (window.AndroidVoice && window.AndroidVoice.listen) {
+      if (window.AndroidVoice.stop) window.AndroidVoice.stop();
+      btn.classList.add('listening');
+      window.AndroidVoice.listen();
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast('Voice search is not available in this browser.'); return; }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    const r = new SR();
+    r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 4;
+    r.onresult = (e) => onHeard(Array.from(e.results[0]).map((a) => a.transcript));
+    r.onerror = (e) => window.onVoiceError(e.error === 'not-allowed' ? 'unavailable' : 'nothing');
+    r.onend = () => btn.classList.remove('listening');
+    btn.classList.add('listening');
+    r.start();
+  }
+
+  // step by step: the walker jumps to the start of a step, the map follows, and the step is read
+  function goStep(k) {
+    const R = S.R; if (!R) return;
+    k = Math.max(0, Math.min(R.steps.length - 1, k));
+    S.playing = false; updatePlayBtn();
+    const s = R.steps[k];
+    curStep = -1;
+    renderAt(k === R.steps.length - 1 ? 1 : k === 0 ? 0 : R.cum[s.from] / R.total + 0.0005);
+    curStep = k;
+    speak(stepSpeech(k), true);
+    if (S.walk) {
+      const pz = S.walk.outdoors ? pzC : pzF, f = pz.frame(), ins = insets();
+      const availW = f.r.width - ins.l - ins.r, availH = f.r.height - ins.t - ins.b;
+      pz.userMoved = 0;
+      pz.go({ x: S.walk.x - (ins.l + availW / 2) / f.k, y: S.walk.y - (ins.t + availH / 2) / f.k, w: pz.vb.w, h: pz.vb.h }, true, 450);
+    }
   }
 
   function findRoute() {
@@ -899,6 +1114,7 @@
     document.querySelectorAll('#nearChips .chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
     showSection('secPlace', 'half');
     requestAnimationFrame(() => showOnMap(v));
+    speak(placeSpeech(v));
     if (!S.dir) qField.set(v, true);
   }
   function closePlace() {
@@ -1091,12 +1307,23 @@
     const b = e.target.closest('.step'); if (!b || !S.R) return;
     const s = S.R.steps[+b.dataset.step];
     S.playing = false; updatePlayBtn();
+    speak(stepSpeech(+b.dataset.step));
     renderAt(s.kind === 'end' ? 1 : S.R.cum[s.from] / S.R.total + 0.0005);
     if (S.view === 'floor') pzF.fit(routeBox(S.sheet) || sheetBox[S.sheet], true);
     else pzC.fit(campusRouteBox(), true);
     if (!desktop()) setSheetSize('peek');
   });
   $('startBtn').addEventListener('click', startNav);
+  $('voiceBtn').addEventListener('click', () => setVoice(!voice.on));
+  $('micBtn').addEventListener('click', () => listen($('micBtn')));
+  $('micBtn2').addEventListener('click', () => listen($('micBtn2')));
+  $('stepPrev').addEventListener('click', () => goStep((curStep < 0 ? 0 : curStep) - 1));
+  $('stepNext').addEventListener('click', () => goStep((curStep < 0 ? 0 : curStep) + 1));
+  $('stepSay').addEventListener('click', () => { if (S.R) speak(stepSpeech(curStep < 0 ? 0 : curStep), true); });
+  $('readAll').addEventListener('click', () => {
+    if (!S.R) return;
+    speak(S.R.steps.map((x, k) => stepSpeech(k)).join(' '), true);
+  });
   $('navExit').addEventListener('click', stopNav);
   $('playBtn').addEventListener('click', () => (S.playing ? pause() : play()));
   $('scrub').addEventListener('input', (e) => { S.playing = false; updatePlayBtn(); pzC.userMoved = pzF.userMoved = 0; renderAt(e.target.value / 1000); });
@@ -1174,6 +1401,7 @@
   try { theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) { /* ignore */ }
   document.documentElement.setAttribute('data-theme', theme);
 
+  setVoiceQuiet();
   measureTop();
   drawCampus();
   drawExamples();
@@ -1187,6 +1415,8 @@
     const m = location.hash.match(/to=([^&]+)/), v = m ? E.findKey(decodeURIComponent(m[1])) : -1;
     if (v >= 0) selectPlace(v);
   }
+
+  function setVoiceQuiet() { setVoice(voice.on, true); }     // show the saved voice setting at start without talking
 
   // the phone's back button: close one thing at a time, like a map app; false means "nothing left, leave the app"
   window.appBack = function () {

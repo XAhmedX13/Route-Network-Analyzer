@@ -437,6 +437,17 @@
     return lo;
   }
 
+  // keep the current step in view by scrolling only the side panel, never the page,
+  // so on a phone the map you are watching does not jump away
+  function keepStepVisible(el) {
+    const side = $('side');
+    if (getComputedStyle(side).overflowY === 'visible' || side.scrollHeight <= side.clientHeight + 1) return;   // phone layout
+    const top = el.getBoundingClientRect().top - side.getBoundingClientRect().top + side.scrollTop;
+    const bottom = top + el.offsetHeight;
+    if (top < side.scrollTop) side.scrollTo({ top: top - 12, behavior: 'smooth' });
+    else if (bottom > side.scrollTop + side.clientHeight) side.scrollTo({ top: bottom - side.clientHeight + 12, behavior: 'smooth' });
+  }
+
   function renderAt(p) {
     const R = S.R; if (!R) return;
     S.p = Math.min(1, Math.max(0, p));
@@ -471,7 +482,7 @@
     document.querySelectorAll('.step').forEach((el, k) => {
       const now = k === cur; if (el.classList.contains('now') !== now) {
         el.classList.toggle('now', now);
-        if (now && S.playing) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        if (now && S.playing) keepStepVisible(el);
       }
     });
     $('scrub').value = Math.round(S.p * 1000);

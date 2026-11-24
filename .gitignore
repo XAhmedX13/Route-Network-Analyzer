@@ -23,3 +23,11 @@ tools/B_*
 tools/C_*
 tools/D_*
 tools/R_*
+
+# Android app build outputs and machine settings
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+android/*.log

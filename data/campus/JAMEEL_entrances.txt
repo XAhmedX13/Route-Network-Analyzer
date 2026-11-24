@@ -1,0 +1,3 @@
+Key Side Description
+JAMEEL_P_EN01 NW Exterior_Door
+JAMEEL_P_EN02 NE Exterior_Door

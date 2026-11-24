@@ -1,0 +1,4 @@
+Key Side Description
+LIB_P_EN01 SE Reading_Area_Side_Door
+LIB_P_EN03 NW Study_Room_Side_Door
+LIB_G_EN01 NE Garden_Terrace_Door

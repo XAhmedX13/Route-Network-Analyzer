@@ -5,3 +5,21 @@ build/
 *.exe
 test_heap
 .vscode/
+
+# big or private working files
+tools/.pylib/
+tools/__pycache__/
+tools/*.png
+tools/run_codex_job.ps1
+University maps/
+Campus Layout.pdf
+data/maps/sketches/
+plz_*.txt
+plaza_gml.gml
+*.docx
+20220808*.pdf
+tools/A_*
+tools/B_*
+tools/C_*
+tools/D_*
+tools/R_*

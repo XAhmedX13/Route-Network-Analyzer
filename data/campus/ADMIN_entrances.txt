@@ -1,0 +1,9 @@
+Key Side Description
+ADMIN_G_EN_NW N North_West_Door
+ADMIN_G_EN_NE E North_East_Door
+ADMIN_G_EN_E E East_Door
+ADMIN_G_MAIN_EN E Main_Entrance
+ADMIN_P_EN_VIP W VIP_Entrance_Administration_Plaza
+ADMIN_P_EN_S S South_Entrance
+ADMIN_F1_EN_E E Arnold_Terrace_Door
+ADMIN_F1_EN_S1 SE South_East_Door

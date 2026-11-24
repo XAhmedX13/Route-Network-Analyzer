@@ -1,84 +1,111 @@
 #include "Graph.h"
-#include <cstring>
 
 Graph::Graph(int c):numV(0),numE(0),capacity(c){
-    head = new Vertex*[capacity];
+    if(capacity < 0) capacity = 0; // a negative size would crash new[]
+    info = new LocationInfo[capacity];
+    edges = new Edge*[capacity];
     for(int i=0;i<capacity;i++){
-        head[i] = nullptr;
+        edges[i] = nullptr; // Every list starts empty
     }
 }
 
 Graph::~Graph(){
     for(int i=0;i<numV;i++){
-        Edge* e = head[i]->edges;
+        Edge* e = edges[i];
         while(e!=nullptr){
             Edge* temp = e;
             e = e->next;
             delete temp;
         }
-        delete[] head[i]->name;   // Freeing the copy of the name
-        delete head[i];
     }
-    delete[] head;
+    delete[] info;
+    delete[] edges; // Frees the array of list heads, the nodes are already gone
 }
 
-int Graph::addVertex(const char* name){
-    if(name == nullptr || numV >= capacity) return -1; // Graph is full
-    int existing = findVertex(name);
-    if(existing != -1) return existing; // The name is already used
+int Graph::addVertex(const LocationInfo& v){
+    if(v.key.empty() || numV >= capacity) return -1; // Empty key or the graph is full
+    if(findVertex(v.key) != -1) return -1; // The key is already used
 
-    head[numV] = new Vertex();
-    head[numV]->name = new char[strlen(name) + 1];
-    strcpy(head[numV]->name, name); // Keeping our own copy of the name
-    head[numV]->edges = nullptr;
+    info[numV] = v; // Copy the LocationInfo struct
+    edges[numV] = nullptr;
     numV++;
     return numV - 1; // Return the index of the new vertex
 }
 
-int Graph::findVertex(const char* name) const{
-    if(name == nullptr || numV == 0) return -1;
+int Graph::findVertex(const string& key) const{
     for(int i =0; i < numV; i++){
-        if(strcmp(head[i]->name, name) == 0) return i;
+        if(info[i].key == key) return i;
     }
     return -1;
 }
 
-bool Graph::addEdge(const char* from, const char* to, int length){
-    int i = findVertex(from);
-    if(i == -1) return false; // We couldn't find the from
-    Vertex* curr1 = head[i];
-
-    int j = findVertex(to);
-    if(j == -1) return false; // We couldn't find the to
-    Vertex* curr2 = head[j];
-
-    if(length < 0 || i == j) return false; // negative length or self loop
-
-    Edge* check = curr1->edges;
-    while(check != nullptr){
-        if(check->to == j) return false; // the edge already exists
-        check = check->next;
+const Edge* Graph::findEdge(int u, int v) const{
+    if(!isValidVertex(u) || !isValidVertex(v)) return nullptr;
+    for(const Edge* e = edges[u]; e != nullptr; e = e->next){
+        if(e->to == v) return e;
     }
+    return nullptr; // We couldn't find it in u's list
+}
 
-    Edge* newEdge = new Edge;
+bool Graph::addEdge(int u, int v, int length, EdgeType t, bool acc){
+    if(!isValidVertex(u) || !isValidVertex(v)) return false; // We couldn't find one of the ends
+    if(length <= 0 || u == v) return false; // length must be positive and no self loop
+    if(findEdge(u, v) != nullptr) return false; // the edge already exists
+
+    Edge* newEdge = new Edge; // add v to the front of u's list
+    newEdge->to = v;
     newEdge->length = length;
-    newEdge->to = j;
-    newEdge->next = curr1->edges;
-    curr1->edges = newEdge;
+    newEdge->type = t;
+    newEdge->accessible = acc;
+    newEdge->next = edges[u];
+    edges[u] = newEdge;
 
-    Edge* backEdge = new Edge; // the graph is undirected, so add the way back too
+    Edge* backEdge = new Edge; // the graph is undirected, so add u to v's list too
+    backEdge->to = u;
     backEdge->length = length;
-    backEdge->to = i;
-    backEdge->next = curr2->edges;
-    curr2->edges = backEdge;
+    backEdge->type = t;
+    backEdge->accessible = acc;
+    backEdge->next = edges[v];
+    edges[v] = backEdge;
 
-    numE++;
+    numE++; // counted once even though it is stored twice
     return true;
 }
 
-Edge* Graph::getNeighbors(int u) const{
-    if(u < 0 || u >= numV) return nullptr;
-    return head[u]->edges;
+bool Graph::isValidVertex(int id) const{
+    return id >= 0 && id < numV;
+}
+
+bool Graph::hasEdge(int u, int v) const{
+    return findEdge(u, v) != nullptr;
+}
+
+int Graph::getWeight(int u, int v) const{
+    const Edge* e = findEdge(u, v);
+    if(e == nullptr) return 0; // no edge
+    return e->length;
+}
+
+EdgeType Graph::getEdgeType(int u, int v) const{
+    const Edge* e = findEdge(u, v);
+    if(e == nullptr) return EdgeType::OTHER; // no edge, so no real type
+    return e->type;
+}
+
+bool Graph::isAccessible(int u, int v) const{
+    const Edge* e = findEdge(u, v);
+    if(e == nullptr) return false; // no edge, nothing to walk on
+    return e->accessible;
+}
+
+const Edge* Graph::getNeighbors(int id) const{
+    if(!isValidVertex(id)) return nullptr;
+    return edges[id];
+}
+
+const LocationInfo* Graph::getVertexInfo(int id) const{
+    if(!isValidVertex(id)) return nullptr;
+    return &info[id]; // address of the struct, so nothing is copied
 }
 
 int Graph::getNumVertices() const{
@@ -89,7 +116,7 @@ int Graph::getNumEdges() const{
     return numE;
 }
 
-const char* Graph::nameOf(int u) const{
-    if(u < 0 || u >= numV) return "";
-    return head[u]->name;
+string Graph::nameOf(int u) const{
+    if(!isValidVertex(u)) return "";
+    return info[u].key;
 }

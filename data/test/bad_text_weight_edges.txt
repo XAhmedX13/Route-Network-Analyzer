@@ -1,0 +1,2 @@
+FromID ToID Weight EdgeType Accessible
+0 1 abc CORRIDOR 1

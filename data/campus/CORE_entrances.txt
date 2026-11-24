@@ -1,0 +1,5 @@
+Key Side Description
+CORE_G_EN01 N Garden_Entrance
+CORE_G_EN02 N Courtyard_North_Entrance
+CORE_G_EN03 E Library_Connection_Door
+CORE_P_EN01 S Plaza_Foyer_Entrance

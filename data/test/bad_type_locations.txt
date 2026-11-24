@@ -1,0 +1,2 @@
+ID Key Label Type Building FloorIndex FloorName MapID X Y
+0 T_0 Node_0 RESTROM TEST 0 Plaza TEST_P 0 0

@@ -1,0 +1,9 @@
+Key Side Description
+RESID_P_EN01 S Residence_Block_Door
+RESID_P_EN02 S Residence_Cluster_2_Door
+RESID_P_EN03 S Residence_Cluster_3_Door
+RESID_P_EN04 S Residence_Cluster_4_Door
+RESID_P_EN05 S Residence_Cluster_5_Door
+RESID_P_EN06 S Residence_Cluster_6_Door
+RESID_P_EN07 N Residence_Cluster_7_Door
+RESID_P_EN08 E Residence_Administration_Entry

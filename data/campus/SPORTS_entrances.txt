@@ -1,0 +1,5 @@
+Key Side Description
+SPORTS_G_EN01 W Exterior_Door
+SPORTS_G_EN02 S Exterior_Door
+SPORTS_P_EN01 N Exterior_Door
+SPORTS_P_EN02 S Exterior_Door

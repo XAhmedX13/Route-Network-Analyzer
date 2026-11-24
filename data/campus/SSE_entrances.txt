@@ -1,0 +1,5 @@
+Key Side Description
+SSE_P_EN01 W Courtyard_Door_ORP02
+SSE_P_EN02 W Physics_Courtyard_Door
+SSE_P_EN03 W Architecture_Courtyard_Door
+SSE_P_EN04 E Mechanical_East_Door

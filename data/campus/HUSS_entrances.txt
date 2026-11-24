@@ -1,0 +1,4 @@
+Key Side Description
+HUSS_P_EN01 S South_Classroom_Wing_Door
+HUSS_P_EN02 NE Northern_Entrance
+HUSS_P_EN03 NE Upper_East_Entrance

@@ -1,0 +1,3 @@
+Key Side Description
+PP_G_EN01 S Exterior_Door
+PP_G_EN02 W Exterior_Door

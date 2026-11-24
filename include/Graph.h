@@ -69,8 +69,10 @@ class Graph{
     Graph(const Graph&) = delete;
     Graph& operator=(const Graph&) = delete;
 
+    int addVertex(const string& key);            // Shortcut: a plain vertex with only a key (used by simple tests)
     int addVertex(const LocationInfo& v);        // Returns the id, -1 if the key is empty, already used, or the graph is full
     int findVertex(const string& key) const;     // Returns the id, -1 if not found
+    bool addEdge(const string& from, const string& to, int length); // Shortcut by key: a corridor, accessible
     bool addEdge(int u, int v, int length, EdgeType t, bool acc); // False for bad id, length <= 0, self loop, or duplicate
     bool isValidVertex(int id) const;            // True if id is between 0 and numV - 1
     bool hasEdge(int u, int v) const;            // True if u and v are connected

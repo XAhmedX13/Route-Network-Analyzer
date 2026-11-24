@@ -120,3 +120,22 @@ string Graph::nameOf(int u) const{
     if(!isValidVertex(u)) return "";
     return info[u].key;
 }
+
+int Graph::addVertex(const string& key){
+    LocationInfo v;
+    v.key = key;
+    v.label = key;                 // the label is the same as the key
+    v.type = LocationType::OTHER;
+    v.building = "";
+    v.floorIndex = 0;
+    v.floorName = "";
+    v.mapID = "";
+    v.x = 0;
+    v.y = 0;
+    return addVertex(v);           // reuse the real function, so every check still applies
+}
+
+bool Graph::addEdge(const string& from, const string& to, int length){
+    // findVertex returns -1 if a key is missing, and the real addEdge rejects -1
+    return addEdge(findVertex(from), findVertex(to), length, EdgeType::CORRIDOR, true);
+}
